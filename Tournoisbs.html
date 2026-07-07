@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page vierge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.15);
+            flex-wrap: wrap;
+        }
+
+        nav button {
+            padding: 0.7rem 1.6rem;
+            border: none;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            color: #2575fc;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        nav button:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        nav button:active {
+            transform: translateY(0);
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: white;
+            color: #333;
+            width: 90%;
+            max-width: 380px;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal h2 {
+            margin-bottom: 1.2rem;
+            color: #2575fc;
+            text-align: center;
+        }
+
+        .modal label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: #555;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .modal input:focus {
+            outline: none;
+            border-color: #2575fc;
+        }
+
+        .modal select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            color: #333;
+        }
+
+        .modal select:focus {
+            outline: none;
+            border-color: #2575fc;
+        }
+
+        .modal button {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal button:hover {
+            opacity: 0.9;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .tournois-container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .tournois-container h2 {
+            text-align: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .tournoi-card {
+            background: white;
+            color: #333;
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+        }
+
+        .tournoi-card h3 {
+            color: #2575fc;
+            margin-bottom: 0.3rem;
+        }
+
+        .tournoi-card p {
+            font-size: 0.9rem;
+            margin-bottom: 0.15rem;
+            color: #555;
+        }
+
+        .inscrit-btn {
+            margin-top: 0.6rem;
+            width: 100%;
+            padding: 0.55rem;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .inscrit-btn:hover {
+            opacity: 0.9;
+        }
+
+        .inscrit-btn.deja-inscrit {
+            background: #2e7d32;
+        }
+
+        .inscrit-btn:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .retour-btn {
+            display: block;
+            width: 100%;
+            max-width: 500px;
+            margin: 1rem auto 0;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 999px;
+            background: white;
+            color: #2575fc;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .retour-btn:hover {
+            background: #f0f0f0;
+        }
+
+        #tournois-page {
+            align-items: flex-start;
+            padding-top: 2.5rem;
+        }
+
+        #main-page {
+            align-items: flex-start;
+            padding-top: 2.5rem;
+        }
+
+        #message-page {
+            align-items: flex-start;
+            padding-top: 2.5rem;
+        }
+
+        .chat-messages {
+            background: white;
+            color: #333;
+            border-radius: 12px;
+            padding: 1rem;
+            max-height: 50vh;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .chat-message {
+            margin-bottom: 0.8rem;
+        }
+
+        .chat-message .auteur {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2575fc;
+            margin-bottom: 0.15rem;
+        }
+
+        .chat-message .texte {
+            background: #f0f2f5;
+            padding: 0.5rem 0.8rem;
+            border-radius: 10px;
+            display: inline-block;
+            word-break: break-word;
+        }
+
+        .chat-message.mine {
+            text-align: right;
+        }
+
+        .chat-message.mine .texte {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .chat-input-row input:focus {
+            outline: none;
+            border-color: #2575fc;
+        }
+
+        .chat-input-row button {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .chat-input-row button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay">
+        <div class="modal" id="signup-modal">
+            <h2>Créer un compte</h2>
+            <form id="signup-form">
+                <label for="name">Nom</label>
+                <input type="text" id="name" required placeholder="Votre nom">
+
+                <label for="email">Adresse mail</label>
+                <input type="email" id="email" required placeholder="vous@exemple.com">
+
+                <label for="password">Mot de passe (6 caractères min.)</label>
+                <input type="password" id="password" required minlength="6" placeholder="••••••••" autocomplete="new-password">
+
+                <label for="password-confirm">Confirme le mot de passe</label>
+                <input type="password" id="password-confirm" required minlength="6" placeholder="••••••••" autocomplete="new-password">
+
+                <label for="trophies">Trophées totaux</label>
+                <input type="number" id="trophies" required placeholder="0" min="0">
+
+                <label for="tag">Tag Supercell (ex: #2Y8V0PGL)</label>
+                <input type="text" id="tag" placeholder="#2Y8V0PGL">
+
+                <label for="identifiant">OU Identifiant Supercell</label>
+                <input type="text" id="identifiant" placeholder="Ton identifiant Supercell">
+
+                <button type="button" id="submit-btn">Créer mon compte</button>
+            </form>
+            <p style="text-align:center; margin-top:1rem; font-size:0.85rem;">
+                Déjà un compte ?
+                <a href="#" id="go-to-login-link">Se connecter</a>
+            </p>
+        </div>
+
+        <div class="modal hidden" id="login-modal">
+            <h2>Se connecter</h2>
+            <form id="login-form">
+                <label for="login-email">Adresse mail</label>
+                <input type="email" id="login-email" required placeholder="vous@exemple.com">
+
+                <label for="login-password">Mot de passe</label>
+                <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+
+                <button type="button" id="login-submit-btn">Se connecter</button>
+            </form>
+            <p style="text-align:center; margin-top:1rem; font-size:0.85rem;">
+                <a href="#" id="forgot-password-link">Mot de passe oublié ?</a>
+            </p>
+            <p style="text-align:center; margin-top:0.4rem; font-size:0.85rem;">
+                Pas encore de compte ?
+                <a href="#" id="go-to-signup-link">Créer un compte</a>
+            </p>
+        </div>
+    </div>
+
+    <main id="main-page">
+        <div class="tournois-container">
+            <h1 id="welcome" style="text-align:center; margin-bottom:1.5rem;">Ma page</h1>
+            <h2>Tournois à venir</h2>
+            <div id="accueil-tournois-list"></div>
+        </div>
+    </main>
+
+    <main id="account-page" class="hidden">
+        <div class="modal" style="text-align:center;">
+            <h2>Mon compte</h2>
+            <p style="margin-bottom:0.6rem;"><strong>Nom :</strong> <span id="account-name"></span></p>
+            <p style="margin-bottom:0.6rem;"><strong>Email :</strong> <span id="account-email"></span></p>
+            <p style="margin-bottom:0.6rem;"><strong>Trophées :</strong> <span id="account-trophies"></span> 🏆</p>
+            <p style="margin-bottom:0.6rem;" id="account-tag"></p>
+            <p style="margin-bottom:1.2rem;" id="account-identifiant"></p>
+            <button type="button" id="logout-btn" style="background:#c0392b; margin-bottom:0.8rem;">Se déconnecter</button>
+            <button type="button" id="back-btn">Retour</button>
+        </div>
+    </main>
+
+    <main id="tournois-page" class="hidden">
+        <div class="tournois-container">
+            <h2>Tournois à venir</h2>
+
+            <button type="button" class="retour-btn hidden" id="admin-add-btn" style="margin-bottom:1rem;">+ Ajouter un tournoi</button>
+
+            <div class="modal hidden" id="admin-add-form" style="margin-bottom:1rem;">
+                <label for="t-nom">Type de tournoi</label>
+                <select id="t-nom">
+                    <option value="Tournois 1v1">Tournois 1v1</option>
+                    <option value="Tournois 2v2">Tournois 2v2</option>
+                    <option value="Tournois 3v3">Tournois 3v3</option>
+                    <option value="Tournois 3v3 mode aléatoire">Tournois 3v3 mode aléatoire</option>
+                </select>
+
+                <label for="t-date">Date</label>
+                <input type="date" id="t-date">
+
+                <label for="t-heure">Heure de début</label>
+                <input type="time" id="t-heure">
+
+                <label for="t-participants">Nombre de participants</label>
+                <select id="t-participants"></select>
+
+                <button type="button" id="t-submit-btn">Ajouter le tournoi</button>
+            </div>
+
+            <div id="tournois-list"></div>
+            <button type="button" class="retour-btn" id="back-btn-tournois">Retour</button>
+        </div>
+    </main>
+
+    <main id="message-page" class="hidden">
+        <div class="tournois-container">
+            <div id="messages-liste-view">
+                <h2>Messages</h2>
+                <div id="messages-tournois-list"></div>
+                <button type="button" class="retour-btn" id="back-btn-message" style="margin-top:1rem;">Retour</button>
+            </div>
+
+            <div id="messages-chat-view" class="hidden">
+                <h2 id="chat-tournoi-titre" style="margin-bottom:1rem;"></h2>
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-row">
+                    <input type="text" id="chat-input" placeholder="Écris un message..." maxlength="500">
+                    <button type="button" id="chat-send-btn">Envoyer</button>
+                </div>
+                <button type="button" class="retour-btn" id="back-btn-chat" style="margin-top:1rem;">Retour aux conversations</button>
+            </div>
+        </div>
+    </main>
+
+
+    <nav>
+        <button id="accueil-btn">Accueil</button>
+        <button id="compte-btn">Compte</button>
+        <button id="message-btn">Message</button>
+        <button id="tournois-btn">Tournois</button>
+    </nav>
+
+    <!-- Firebase SDK (compat, simple à utiliser sans outil de build) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+
+    <script>
+        // ============================================================
+        // 1) Remplace ces valeurs par la config de TON projet Firebase
+        //    (Console Firebase > Paramètres du projet > Vos applications)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1m4gVqGU0AZuaH_DGqhjDTVYFHrCLNHU",
+            authDomain: "tournois-brawl-stars.firebaseapp.com",
+            databaseURL: "https://tournois-brawl-stars-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "tournois-brawl-stars",
+            storageBucket: "tournois-brawl-stars.firebasestorage.app",
+            messagingSenderId: "343868896041",
+            appId: "1:343868896041:web:88c75e9b2c0259d0f2bd38"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const auth = firebase.auth();
+        const comptesRef = db.ref('comptes');
+        // ============================================================
+        // Authentification réelle : Firebase Auth (email + mot de passe).
+        // Les profils (nom, trophées, tag...) sont stockés dans
+        // comptes/{uid}, où {uid} est l'identifiant unique et infalsifiable
+        // fourni par Firebase Auth après connexion — impossible à deviner
+        // ou à usurper simplement en connaissant l'email de quelqu'un.
+        // ============================================================
+
+        const overlay = document.getElementById('overlay');
+        const welcome = document.getElementById('welcome');
+
+        const signupModal = document.getElementById('signup-modal');
+        const submitBtn = document.getElementById('submit-btn');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const passwordConfirmInput = document.getElementById('password-confirm');
+        const trophiesInput = document.getElementById('trophies');
+        const tagInput = document.getElementById('tag');
+        const identifiantInput = document.getElementById('identifiant');
+        const goToLoginLink = document.getElementById('go-to-login-link');
+
+        const loginModal = document.getElementById('login-modal');
+        const loginSubmitBtn = document.getElementById('login-submit-btn');
+        const loginEmailInput = document.getElementById('login-email');
+        const loginPasswordInput = document.getElementById('login-password');
+        const forgotPasswordLink = document.getElementById('forgot-password-link');
+        const goToSignupLink = document.getElementById('go-to-signup-link');
+
+        function afficherModaleInscription() {
+            overlay.classList.remove('hidden');
+            signupModal.classList.remove('hidden');
+            loginModal.classList.add('hidden');
+        }
+
+        function afficherModaleConnexion() {
+            overlay.classList.remove('hidden');
+            loginModal.classList.remove('hidden');
+            signupModal.classList.add('hidden');
+        }
+
+        goToLoginLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            afficherModaleConnexion();
+        });
+
+        goToSignupLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            afficherModaleInscription();
+        });
+
+        // Charge le profil (comptes/{uid}) d'un utilisateur Firebase Auth déjà connecté
+        function chargerProfil(user) {
+            return comptesRef.child(user.uid).once('value').then(function (snapshot) {
+                const profil = snapshot.val() || {};
+                window.currentUser = Object.assign({ uid: user.uid, email: user.email }, profil);
+                return window.currentUser;
+            });
+        }
+
+        // Restaure automatiquement la session au chargement de la page
+        // (Firebase Auth conserve la session dans le navigateur : plus besoin
+        // de retaper son mot de passe à chaque visite tant qu'on ne s'est pas déconnecté)
+        auth.onAuthStateChanged(function (user) {
+            if (user) {
+                chargerProfil(user).then(function (profil) {
+                    welcome.textContent = `Bienvenue, ${profil.name || profil.email} !`;
+                    overlay.classList.add('hidden');
+                    afficherTournoisAccueil();
+                });
+            } else {
+                window.currentUser = null;
+                welcome.textContent = 'Ma page';
+            }
+        });
+
+        function messageErreurAuth(error) {
+            switch (error.code) {
+                case 'auth/email-already-in-use':
+                    return "Un compte existe déjà avec cet email. Utilise plutôt \"Se connecter\".";
+                case 'auth/invalid-email':
+                    return "Adresse email invalide.";
+                case 'auth/weak-password':
+                    return "Le mot de passe doit contenir au moins 6 caractères.";
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    return "Email ou mot de passe incorrect.";
+                case 'auth/user-not-found':
+                    return "Aucun compte trouvé avec cet email. Crée un compte.";
+                case 'auth/too-many-requests':
+                    return "Trop de tentatives. Réessaie dans quelques minutes.";
+                default:
+                    return error.message;
+            }
+        }
+
+        function validerCompte() {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const passwordConfirm = passwordConfirmInput.value;
+            const trophies = trophiesInput.value.trim();
+            const tag = tagInput.value.trim();
+            const identifiant = identifiantInput.value.trim();
+
+            if (!name || !email || !password || !trophies) {
+                alert('Merci de remplir tous les champs.');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Le mot de passe doit contenir au moins 6 caractères.');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                alert('Les deux mots de passe ne correspondent pas.');
+                return;
+            }
+
+            if (!tag && !identifiant) {
+                alert('Merci de renseigner ton Tag Supercell OU ton Identifiant Supercell (au moins un des deux).');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Création du compte...';
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(function (credential) {
+                    const uid = credential.user.uid;
+                    return comptesRef.child(uid).set({
+                        name: name,
+                        email: email,
+                        trophies: trophies,
+                        tag: tag,
+                        identifiant: identifiant,
+                        creeLe: firebase.database.ServerValue.TIMESTAMP
+                    }).then(function () {
+                        window.currentUser = { uid, name, email, trophies, tag, identifiant };
+                        welcome.textContent = `Bienvenue, ${name} !`;
+                        overlay.classList.add('hidden');
+                        afficherTournoisAccueil();
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase Auth :', error);
+                    alert("Impossible de créer le compte : " + messageErreurAuth(error));
+                })
+                .finally(function () {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Créer mon compte';
+                });
+        }
+
+        submitBtn.addEventListener('click', validerCompte);
+
+        // Permet aussi de valider avec la touche Entrée
+        [nameInput, emailInput, passwordInput, passwordConfirmInput, trophiesInput, tagInput, identifiantInput].forEach(function (input) {
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    validerCompte();
+                }
+            });
+        });
+
+        function connecter() {
+            const email = loginEmailInput.value.trim();
+            const password = loginPasswordInput.value;
+
+            if (!email || !password) {
+                alert('Merci de renseigner ton email et ton mot de passe.');
+                return;
+            }
+
+            loginSubmitBtn.disabled = true;
+            loginSubmitBtn.textContent = 'Connexion...';
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(function (credential) {
+                    return chargerProfil(credential.user);
+                })
+                .then(function (profil) {
+                    welcome.textContent = `Bienvenue, ${profil.name || profil.email} !`;
+                    overlay.classList.add('hidden');
+                    loginEmailInput.value = '';
+                    loginPasswordInput.value = '';
+                    afficherTournoisAccueil();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase Auth :', error);
+                    alert(messageErreurAuth(error));
+                })
+                .finally(function () {
+                    loginSubmitBtn.disabled = false;
+                    loginSubmitBtn.textContent = 'Se connecter';
+                });
+        }
+
+        loginSubmitBtn.addEventListener('click', connecter);
+
+        [loginEmailInput, loginPasswordInput].forEach(function (input) {
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    connecter();
+                }
+            });
+        });
+
+        forgotPasswordLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            const email = loginEmailInput.value.trim() || prompt('Entre ton adresse email pour recevoir un lien de réinitialisation :');
+            if (!email) return;
+
+            auth.sendPasswordResetEmail(email)
+                .then(function () {
+                    alert('Un email de réinitialisation du mot de passe a été envoyé à ' + email + '.');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase Auth :', error);
+                    alert("Impossible d'envoyer l'email : " + messageErreurAuth(error));
+                });
+        });
+
+        function deconnecter() {
+            auth.signOut().then(function () {
+                window.currentUser = null;
+                welcome.textContent = 'Ma page';
+            });
+        }
+
+        const mainPage = document.getElementById('main-page');
+        const accountPage = document.getElementById('account-page');
+        const messagePage = document.getElementById('message-page');
+        const accueilBtn = document.getElementById('accueil-btn');
+        const compteBtn = document.getElementById('compte-btn');
+        const messageBtn = document.getElementById('message-btn');
+        const backBtn = document.getElementById('back-btn');
+        const backBtnMessage = document.getElementById('back-btn-message');
+
+        // Cache toutes les pages, puis affiche celle demandée
+        function afficherPage(page) {
+            quitterConversation();
+            [mainPage, accountPage, messagePage, tournoisPage].forEach(function (p) {
+                if (p) p.classList.add('hidden');
+            });
+            page.classList.remove('hidden');
+        }
+
+        const accueilTournoisList = document.getElementById('accueil-tournois-list');
+
+        function afficherTournoisAccueil() {
+            accueilTournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+            tournoisRef.once('value')
+                .then(function (snapshot) {
+                    const data = snapshot.val() || {};
+                    const maintenant = new Date();
+                    const aVenir = Object.keys(data)
+                        .map(function (key) { return Object.assign({ id: key }, data[key]); })
+                        .filter(function (t) { return new Date(t.date + 'T' + (t.heure || '00:00')) >= maintenant; })
+                        .sort(function (a, b) {
+                            return new Date(a.date + 'T' + (a.heure || '00:00')) - new Date(b.date + 'T' + (b.heure || '00:00'));
+                        });
+
+                    if (aVenir.length === 0) {
+                        accueilTournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
+                    } else {
+                        accueilTournoisList.innerHTML = aVenir.map(genererCarteTournoiHTML).join('');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    accueilTournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des tournois.</p>';
+                });
+        }
+
+        accueilBtn.addEventListener('click', function () {
+            afficherPage(mainPage);
+            afficherTournoisAccueil();
+        });
+
+        const messagesListeView = document.getElementById('messages-liste-view');
+        const messagesChatView = document.getElementById('messages-chat-view');
+        const messagesTournoisList = document.getElementById('messages-tournois-list');
+        const chatTournoiTitre = document.getElementById('chat-tournoi-titre');
+        const chatMessagesEl = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const chatSendBtn = document.getElementById('chat-send-btn');
+        const backBtnChat = document.getElementById('back-btn-chat');
+
+        let conversationOuverteRef = null; // référence Firebase actuellement écoutée en temps réel
+        let mesTournoisCache = {};
+
+        // Échappe le texte pour éviter d'injecter du HTML dans les messages
+        function echapperHTML(texte) {
+            const div = document.createElement('div');
+            div.textContent = texte;
+            return div.innerHTML;
+        }
+
+        // Arrête l'écoute en temps réel de la conversation actuellement ouverte
+        function quitterConversation() {
+            if (conversationOuverteRef) {
+                conversationOuverteRef.off('value');
+                conversationOuverteRef = null;
+            }
+        }
+
+        function afficherListeMessages() {
+            quitterConversation();
+            messagesChatView.classList.add('hidden');
+            messagesListeView.classList.remove('hidden');
+
+            if (!window.currentUser) {
+                messagesTournoisList.innerHTML = '<p style="text-align:center;">Connecte-toi (bouton Compte) pour voir tes conversations de tournoi.</p>';
+                return;
+            }
+
+            messagesTournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+            tournoisRef.once('value')
+                .then(function (snapshot) {
+                    const data = snapshot.val() || {};
+                    const monUid = window.currentUser.uid;
+
+                    const mesTournois = Object.keys(data)
+                        .map(function (key) { return Object.assign({ id: key }, data[key]); })
+                        .filter(function (t) {
+                            const inscrits = t.inscrits || {};
+                            return !!inscrits[monUid];
+                        })
+                        .sort(function (a, b) {
+                            return new Date(a.date + 'T' + (a.heure || '00:00')) - new Date(b.date + 'T' + (b.heure || '00:00'));
+                        });
+
+                    mesTournoisCache = {};
+                    mesTournois.forEach(function (t) { mesTournoisCache[t.id] = t; });
+
+                    if (mesTournois.length === 0) {
+                        messagesTournoisList.innerHTML = '<p style="text-align:center;">Tu n\'es inscrit à aucun tournoi pour le moment. Inscris-toi à un tournoi (page Tournois) pour accéder à sa conversation.</p>';
+                        return;
+                    }
+
+                    messagesTournoisList.innerHTML = mesTournois.map(function (t) {
+                        return '<div class="tournoi-card">' +
+                            '<h3>' + t.nom + '</h3>' +
+                            '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + '</p>' +
+                            '<button type="button" class="inscrit-btn" data-id="' + t.id + '">Voir la conversation</button>' +
+                            '</div>';
+                    }).join('');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    messagesTournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des conversations.</p>';
+                });
+        }
+
+        function ouvrirConversation(tournoiId) {
+            if (!window.currentUser) return;
+
+            const t = mesTournoisCache[tournoiId];
+            if (!t) return;
+
+            quitterConversation();
+
+            messagesListeView.classList.add('hidden');
+            messagesChatView.classList.remove('hidden');
+            chatTournoiTitre.textContent = t.nom;
+            chatMessagesEl.innerHTML = '<p style="text-align:center; color:#777;">Chargement...</p>';
+
+            const monUid = window.currentUser.uid;
+
+            // On revérifie côté serveur que l'utilisateur est bien inscrit avant d'ouvrir la conversation
+            tournoisRef.child(tournoiId).child('inscrits').child(monUid).once('value')
+                .then(function (snap) {
+                    if (!snap.exists()) {
+                        chatMessagesEl.innerHTML = '<p style="text-align:center;">Tu dois être inscrit à ce tournoi pour voir sa conversation.</p>';
+                        return;
+                    }
+
+                    conversationOuverteRef = tournoisRef.child(tournoiId).child('messages');
+
+                    conversationOuverteRef.on('value', function (msgSnap) {
+                        const data = msgSnap.val() || {};
+                        const messages = Object.keys(data)
+                            .map(function (key) { return data[key]; })
+                            .sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+
+                        if (messages.length === 0) {
+                            chatMessagesEl.innerHTML = '<p style="text-align:center; color:#777;">Aucun message pour l\'instant. Sois le premier à écrire !</p>';
+                        } else {
+                            chatMessagesEl.innerHTML = messages.map(function (m) {
+                                const mine = m.uid === monUid;
+                                return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
+                                    '<div class="auteur">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
+                                    '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
+                                    '</div>';
+                            }).join('');
+                        }
+
+                        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+                    }, function (error) {
+                        console.error('Erreur Firebase :', error);
+                        chatMessagesEl.innerHTML = '<p style="text-align:center;">Erreur de chargement des messages.</p>';
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    chatMessagesEl.innerHTML = '<p style="text-align:center;">Erreur lors de l\'ouverture de la conversation.</p>';
+                });
+        }
+
+        messagesTournoisList.addEventListener('click', function (e) {
+            const btn = e.target.closest('.inscrit-btn');
+            if (!btn) return;
+            ouvrirConversation(btn.dataset.id);
+        });
+
+        function envoyerMessage() {
+            const texte = chatInput.value.trim();
+            if (!texte || !conversationOuverteRef || !window.currentUser) return;
+
+            chatSendBtn.disabled = true;
+
+            conversationOuverteRef.push({
+                auteur: window.currentUser.name,
+                uid: window.currentUser.uid,
+                texte: texte,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            })
+                .then(function () {
+                    chatInput.value = '';
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible d'envoyer le message : " + error.message);
+                })
+                .finally(function () {
+                    chatSendBtn.disabled = false;
+                    chatInput.focus();
+                });
+        }
+
+        chatSendBtn.addEventListener('click', envoyerMessage);
+
+        chatInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                envoyerMessage();
+            }
+        });
+
+        backBtnChat.addEventListener('click', afficherListeMessages);
+
+        messageBtn.addEventListener('click', function () {
+            afficherPage(messagePage);
+            afficherListeMessages();
+        });
+
+        backBtnMessage.addEventListener('click', function () {
+            afficherPage(mainPage);
+        });
+
+        function remplirInfosCompte(user) {
+            document.getElementById('account-name').textContent = user.name;
+            document.getElementById('account-email').textContent = user.email;
+            document.getElementById('account-trophies').textContent = user.trophies;
+
+            const tagEl = document.getElementById('account-tag');
+            tagEl.innerHTML = '<strong>Tag Supercell (#) :</strong> ' + (user.tag || 'Non renseigné');
+
+            const identifiantEl = document.getElementById('account-identifiant');
+            identifiantEl.innerHTML = '<strong>Identifiant Supercell :</strong> ' + (user.identifiant || 'Non renseigné');
+        }
+
+        compteBtn.addEventListener('click', function () {
+            if (window.currentUser) {
+                remplirInfosCompte(window.currentUser);
+                afficherPage(accountPage);
+                return;
+            }
+
+            // Plus de prompt() ni de simple lookup par email : on demande une
+            // vraie connexion (email + mot de passe) via Firebase Auth.
+            afficherModaleConnexion();
+        });
+
+        const logoutBtn = document.getElementById('logout-btn');
+        logoutBtn.addEventListener('click', function () {
+            deconnecter();
+            afficherPage(mainPage);
+        });
+
+        backBtn.addEventListener('click', function () {
+            afficherPage(mainPage);
+        });
+
+        // Seul ce compte peut créer des tournois
+        const ADMIN_EMAIL = 'bussierenoa@gmail.com';
+        const tournoisRef = db.ref('tournois');
+
+        const tournoisPage = document.getElementById('tournois-page');
+        const tournoisBtn = document.getElementById('tournois-btn');
+        const tournoisList = document.getElementById('tournois-list');
+        const backBtnTournois = document.getElementById('back-btn-tournois');
+        const adminAddBtn = document.getElementById('admin-add-btn');
+        const adminAddForm = document.getElementById('admin-add-form');
+        const tNomInput = document.getElementById('t-nom');
+        const tDateInput = document.getElementById('t-date');
+        const tHeureInput = document.getElementById('t-heure');
+        const tParticipantsInput = document.getElementById('t-participants');
+
+        // Les choix de nombre de participants dépendent du mode de tournoi
+        const optionsParticipants = {
+            'Tournois 1v1': [2, 4, 8, 16],
+            'Tournois 2v2': [4, 8, 16, 32],
+            'Tournois 3v3': [6, 12, 24, 48],
+            'Tournois 3v3 mode aléatoire': [6, 12, 24, 48]
+        };
+
+        function majOptionsParticipants() {
+            const choix = optionsParticipants[tNomInput.value] || [2, 4, 8, 16];
+            tParticipantsInput.innerHTML = choix.map(function (n) {
+                return '<option value="' + n + '">' + n + '</option>';
+            }).join('');
+        }
+
+        tNomInput.addEventListener('change', majOptionsParticipants);
+        majOptionsParticipants();
+        const tSubmitBtn = document.getElementById('t-submit-btn');
+
+        function estAdmin() {
+            return window.currentUser && window.currentUser.email &&
+                window.currentUser.email.trim().toLowerCase() === ADMIN_EMAIL;
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Génère le HTML d'une carte de tournoi (réutilisé sur la page Accueil et sur la page Tournois)
+        function genererCarteTournoiHTML(t) {
+            const inscrits = t.inscrits || {};
+            const nbInscrits = Object.keys(inscrits).length;
+            const max = parseInt(t.participants, 10);
+            const dejaInscrit = window.currentUser && inscrits[window.currentUser.uid];
+            const complet = nbInscrits >= max && !dejaInscrit;
+
+            let texteBouton = "S'inscrire";
+            let classeBouton = 'inscrit-btn';
+            if (dejaInscrit) {
+                texteBouton = 'Inscrit ✓ (se désinscrire)';
+                classeBouton += ' deja-inscrit';
+            } else if (complet) {
+                texteBouton = 'Complet';
+            }
+
+            return '<div class="tournoi-card">' +
+                '<h3>' + t.nom + '</h3>' +
+                '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + '</p>' +
+                '<p>👥 ' + nbInscrits + ' / ' + t.participants + ' participants</p>' +
+                '<button type="button" class="' + classeBouton + '" data-id="' + t.id + '"' +
+                    (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
+                '</div>';
+        }
+
+        // Gère l'inscription/désinscription à un tournoi (réutilisé sur les deux pages)
+        function gererInscription(tournoiId, btn, rafraichir) {
+            if (!window.currentUser) {
+                alert("Connecte-toi d'abord (bouton Compte) pour pouvoir t'inscrire à un tournoi.");
+                return;
+            }
+
+            const inscritRef = tournoisRef.child(tournoiId).child('inscrits').child(window.currentUser.uid);
+
+            btn.disabled = true;
+
+            inscritRef.once('value')
+                .then(function (snapshot) {
+                    if (snapshot.exists()) {
+                        // Déjà inscrit : on désinscrit
+                        return inscritRef.remove();
+                    } else {
+                        // Pas encore inscrit : on vérifie la place puis on inscrit
+                        return tournoisRef.child(tournoiId).child('inscrits').once('value').then(function (inscritsSnap) {
+                            const inscrits = inscritsSnap.val() || {};
+                            return tournoisRef.child(tournoiId).child('participants').once('value').then(function (maxSnap) {
+                                const max = parseInt(maxSnap.val(), 10);
+                                if (Object.keys(inscrits).length >= max) {
+                                    alert('Ce tournoi est complet.');
+                                    return;
+                                }
+                                return inscritRef.set({
+                                    name: window.currentUser.name,
+                                    tag: window.currentUser.tag || '',
+                                    identifiant: window.currentUser.identifiant || ''
+                                });
+                            });
+                        });
+                    }
+                })
+                .then(function () {
+                    rafraichir();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Erreur lors de l'inscription : " + error.message);
+                    btn.disabled = false;
+                });
+        }
+
+        function afficherTournois() {
+            afficherPage(tournoisPage);
+
+            // Le bouton "+ Ajouter un tournoi" n'apparaît que pour l'admin
+            if (estAdmin()) {
+                adminAddBtn.classList.remove('hidden');
+            } else {
+                adminAddBtn.classList.add('hidden');
+                adminAddForm.classList.add('hidden');
+            }
+
+            tournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+            tournoisRef.once('value')
+                .then(function (snapshot) {
+                    const data = snapshot.val() || {};
+                    const maintenant = new Date();
+                    const aVenir = Object.keys(data)
+                        .map(function (key) { return Object.assign({ id: key }, data[key]); })
+                        .filter(function (t) { return new Date(t.date + 'T' + (t.heure || '00:00')) >= maintenant; })
+                        .sort(function (a, b) {
+                            return new Date(a.date + 'T' + (a.heure || '00:00')) - new Date(b.date + 'T' + (b.heure || '00:00'));
+                        });
+
+                    if (aVenir.length === 0) {
+                        tournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
+                    } else {
+                        tournoisList.innerHTML = aVenir.map(genererCarteTournoiHTML).join('');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    tournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des tournois.</p>';
+                });
+        }
+
+        tournoisBtn.addEventListener('click', afficherTournois);
+
+        // Gère le clic sur "S'inscrire" / "Se désinscrire" (délégation d'événement
+        // car les boutons sont créés dynamiquement)
+        tournoisList.addEventListener('click', function (e) {
+            const btn = e.target.closest('.inscrit-btn');
+            if (!btn || btn.disabled) return;
+            gererInscription(btn.dataset.id, btn, afficherTournois);
+        });
+
+        // Même délégation d'événement pour la liste de tournois affichée sur l'Accueil,
+        // afin de pouvoir s'inscrire directement depuis cette page
+        accueilTournoisList.addEventListener('click', function (e) {
+            const btn = e.target.closest('.inscrit-btn');
+            if (!btn || btn.disabled) return;
+            gererInscription(btn.dataset.id, btn, afficherTournoisAccueil);
+        });
+
+        adminAddBtn.addEventListener('click', function () {
+            adminAddForm.classList.toggle('hidden');
+        });
+
+        tSubmitBtn.addEventListener('click', function () {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut ajouter un tournoi.");
+                return;
+            }
+
+            const nom = tNomInput.value.trim();
+            const date = tDateInput.value;
+            const heure = tHeureInput.value;
+            const participants = tParticipantsInput.value.trim();
+
+            if (!nom || !date || !heure || !participants) {
+                alert('Merci de remplir tous les champs du tournoi.');
+                return;
+            }
+
+            tSubmitBtn.disabled = true;
+            tSubmitBtn.textContent = 'Ajout...';
+
+            tournoisRef.push({ nom, date, heure, participants })
+                .then(function () {
+                    tDateInput.value = '';
+                    tHeureInput.value = '';
+                    majOptionsParticipants();
+                    adminAddForm.classList.add('hidden');
+                    afficherTournois();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible d'ajouter le tournoi : " + error.message);
+                })
+                .finally(function () {
+                    tSubmitBtn.disabled = false;
+                    tSubmitBtn.textContent = 'Ajouter le tournoi';
+                });
+        });
+
+        backBtnTournois.addEventListener('click', function () {
+            afficherPage(mainPage);
+        });
+
+        // Affiche les tournois à venir dès l'ouverture de la page
+        afficherTournoisAccueil();
+    </script>
+
+</body>
+</html>
