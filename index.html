@@ -847,7 +847,7 @@
                         return;
                     }
 
-                    conversationOuverteRef = tournoisRef.child(tournoiId).child('messages');
+                    conversationOuverteRef = messagesRef.child(tournoiId);
 
                     conversationOuverteRef.on('value', function (msgSnap) {
                         const data = msgSnap.val() || {};
@@ -967,6 +967,7 @@
         // Seul ce compte peut créer des tournois
         const ADMIN_EMAIL = 'bussierenoa@gmail.com';
         const tournoisRef = db.ref('tournois');
+        const messagesRef = db.ref('messages'); // séparé de "tournois" pour pouvoir rendre les infos de tournoi publiques sans exposer les conversations
 
         const tournoisPage = document.getElementById('tournois-page');
         const tournoisBtn = document.getElementById('tournois-btn');
@@ -1026,10 +1027,10 @@
             }
 
             return '<div class="tournoi-card">' +
-                '<h3>' + t.nom + '</h3>' +
-                '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + '</p>' +
+                '<h3>' + echapperHTML(t.nom) + '</h3>' +
+                '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + echapperHTML(t.heure) : '') + '</p>' +
                 '<p>👥 ' + nbInscrits + ' / ' + t.participants + ' participants</p>' +
-                '<button type="button" class="' + classeBouton + '" data-id="' + t.id + '"' +
+                '<button type="button" class="' + classeBouton + '" data-id="' + echapperHTML(t.id) + '"' +
                     (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
                 '</div>';
         }
