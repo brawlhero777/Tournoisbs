@@ -492,7 +492,7 @@
 
                 <div id="prive-view" class="hidden">
                     <div class="nouvelle-conv-row">
-                        <input type="text" id="prive-recherche-input" placeholder="Pseudo de la personne...">
+                        <input type="text" id="prive-recherche-input" placeholder="Identifiant Supercell ou #Tag...">
                         <button type="button" id="prive-nouvelle-btn">Nouveau</button>
                     </div>
                     <div id="messages-prive-list"></div>
@@ -545,7 +545,7 @@
         const db = firebase.database();
         const auth = firebase.auth();
         const comptesRef = db.ref('comptes');
-        const pseudosRef = db.ref('pseudos'); // index public pseudo -> {uid, name}, pour retrouver un utilisateur en message privé
+        const pseudosRef = db.ref('pseudos'); // index public tag/identifiant Supercell -> {uid, name}, pour retrouver un utilisateur en message privé
         // ============================================================
         // Authentification réelle : Firebase Auth (email + mot de passe).
         // Les profils (nom, trophées, tag...) sont stockés dans
@@ -686,9 +686,16 @@
                         creeLe: firebase.database.ServerValue.TIMESTAMP
                     }).then(function () {
                         window.currentUser = { uid, name, email, trophies, tag, identifiant };
-                        // Indexe le pseudo publiquement pour permettre de trouver ce compte en message privé
-                        return pseudosRef.child(cleanPseudoKey(name)).set({ uid: uid, name: name }).catch(function (error) {
-                            console.error('Erreur indexation du pseudo :', error);
+                        // Indexe le tag et/ou l'identifiant Supercell publiquement pour retrouver ce compte en message privé
+                        const indexations = [];
+                        if (tag) {
+                            indexations.push(pseudosRef.child(cleanPseudoKey(tag)).set({ uid: uid, name: name }));
+                        }
+                        if (identifiant) {
+                            indexations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
+                        }
+                        return Promise.all(indexations).catch(function (error) {
+                            console.error('Erreur indexation tag/identifiant :', error);
                         });
                     }).then(function () {
                         welcome.textContent = `Bienvenue, ${name} !`;
@@ -986,25 +993,25 @@
                 });
         }
 
-        // Démarre (ou retrouve) une conversation privée à partir d'un pseudo
+        // Démarre (ou retrouve) une conversation privée à partir d'un tag ou identifiant Supercell
         priveNouvelleBtn.addEventListener('click', function () {
             if (!window.currentUser) {
                 alert("Connecte-toi d'abord (bouton Compte) pour envoyer un message privé.");
                 return;
             }
 
-            const pseudo = priveRechercheInput.value.trim();
-            if (!pseudo) {
-                alert('Entre le pseudo de la personne à qui tu veux écrire.');
+            const recherche = priveRechercheInput.value.trim();
+            if (!recherche) {
+                alert("Entre l'identifiant Supercell ou le #Tag de la personne à qui tu veux écrire.");
                 return;
             }
 
             priveNouvelleBtn.disabled = true;
 
-            pseudosRef.child(cleanPseudoKey(pseudo)).once('value')
+            pseudosRef.child(cleanPseudoKey(recherche)).once('value')
                 .then(function (snap) {
                     if (!snap.exists()) {
-                        alert("Aucun compte trouvé avec ce pseudo.");
+                        alert("Aucun compte trouvé avec cet identifiant ou ce tag.");
                         return;
                     }
 
