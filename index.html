@@ -198,6 +198,70 @@
             cursor: not-allowed;
         }
 
+        .supprimer-btn {
+            margin-top: 0.5rem;
+            width: 100%;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 999px;
+            background: #c62828;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .supprimer-btn:hover {
+            opacity: 0.9;
+        }
+
+        .msg-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .msg-tab-btn {
+            flex: 1;
+            padding: 0.6rem;
+            border: none;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .msg-tab-btn.active {
+            background: white;
+            color: #2575fc;
+        }
+
+        .nouvelle-conv-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .nouvelle-conv-row input {
+            flex: 1;
+            padding: 0.6rem 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .nouvelle-conv-row button {
+            padding: 0.6rem 1rem;
+            border: none;
+            border-radius: 999px;
+            background: white;
+            color: #2575fc;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
         .retour-btn {
             display: block;
             width: 100%;
@@ -416,7 +480,24 @@
         <div class="tournois-container">
             <div id="messages-liste-view">
                 <h2>Messages</h2>
-                <div id="messages-tournois-list"></div>
+
+                <div class="msg-tabs">
+                    <button type="button" id="tab-groupe-btn" class="msg-tab-btn active">Groupe</button>
+                    <button type="button" id="tab-prive-btn" class="msg-tab-btn">Privé</button>
+                </div>
+
+                <div id="groupe-view">
+                    <div id="messages-tournois-list"></div>
+                </div>
+
+                <div id="prive-view" class="hidden">
+                    <div class="nouvelle-conv-row">
+                        <input type="text" id="prive-recherche-input" placeholder="Pseudo de la personne...">
+                        <button type="button" id="prive-nouvelle-btn">Nouveau</button>
+                    </div>
+                    <div id="messages-prive-list"></div>
+                </div>
+
                 <button type="button" class="retour-btn" id="back-btn-message" style="margin-top:1rem;">Retour</button>
             </div>
 
@@ -464,6 +545,7 @@
         const db = firebase.database();
         const auth = firebase.auth();
         const comptesRef = db.ref('comptes');
+        const pseudosRef = db.ref('pseudos'); // index public pseudo -> {uid, name}, pour retrouver un utilisateur en message privé
         // ============================================================
         // Authentification réelle : Firebase Auth (email + mot de passe).
         // Les profils (nom, trophées, tag...) sont stockés dans
@@ -604,6 +686,11 @@
                         creeLe: firebase.database.ServerValue.TIMESTAMP
                     }).then(function () {
                         window.currentUser = { uid, name, email, trophies, tag, identifiant };
+                        // Indexe le pseudo publiquement pour permettre de trouver ce compte en message privé
+                        return pseudosRef.child(cleanPseudoKey(name)).set({ uid: uid, name: name }).catch(function (error) {
+                            console.error('Erreur indexation du pseudo :', error);
+                        });
+                    }).then(function () {
                         welcome.textContent = `Bienvenue, ${name} !`;
                         overlay.classList.add('hidden');
                         afficherTournoisAccueil();
@@ -734,7 +821,7 @@
                     if (aVenir.length === 0) {
                         accueilTournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
                     } else {
-                        accueilTournoisList.innerHTML = aVenir.map(genererCarteTournoiHTML).join('');
+                        accueilTournoisList.innerHTML = aVenir.map(function (t) { return genererCarteTournoiHTML(t, false); }).join('');
                     }
                 })
                 .catch(function (error) {
@@ -756,15 +843,29 @@
         const chatInput = document.getElementById('chat-input');
         const chatSendBtn = document.getElementById('chat-send-btn');
         const backBtnChat = document.getElementById('back-btn-chat');
+        const tabGroupeBtn = document.getElementById('tab-groupe-btn');
+        const tabPriveBtn = document.getElementById('tab-prive-btn');
+        const groupeView = document.getElementById('groupe-view');
+        const priveView = document.getElementById('prive-view');
+        const messagesPriveList = document.getElementById('messages-prive-list');
+        const priveRechercheInput = document.getElementById('prive-recherche-input');
+        const priveNouvelleBtn = document.getElementById('prive-nouvelle-btn');
 
         let conversationOuverteRef = null; // référence Firebase actuellement écoutée en temps réel
         let mesTournoisCache = {};
+        let conversationsPriveesCache = {};
+        let ongletMessagesActif = 'groupe'; // 'groupe' ou 'prive'
 
         // Échappe le texte pour éviter d'injecter du HTML dans les messages
         function echapperHTML(texte) {
             const div = document.createElement('div');
             div.textContent = texte;
             return div.innerHTML;
+        }
+
+        // Transforme un pseudo en clé Firebase valide (les clés ne peuvent pas contenir . # $ [ ] /)
+        function cleanPseudoKey(pseudo) {
+            return pseudo.trim().toLowerCase().replace(/[.#$\[\]\/]/g, '_');
         }
 
         // Arrête l'écoute en temps réel de la conversation actuellement ouverte
@@ -775,11 +876,37 @@
             }
         }
 
+        // Dispatcher : affiche la liste de conversations correspondant à l'onglet actif
         function afficherListeMessages() {
             quitterConversation();
             messagesChatView.classList.add('hidden');
             messagesListeView.classList.remove('hidden');
 
+            if (ongletMessagesActif === 'prive') {
+                afficherConversationsPrivees();
+            } else {
+                afficherConversationsGroupe();
+            }
+        }
+
+        function activerOngletMessages(onglet) {
+            ongletMessagesActif = onglet;
+            tabGroupeBtn.classList.toggle('active', onglet === 'groupe');
+            tabPriveBtn.classList.toggle('active', onglet === 'prive');
+            groupeView.classList.toggle('hidden', onglet !== 'groupe');
+            priveView.classList.toggle('hidden', onglet !== 'prive');
+
+            if (onglet === 'prive') {
+                afficherConversationsPrivees();
+            } else {
+                afficherConversationsGroupe();
+            }
+        }
+
+        tabGroupeBtn.addEventListener('click', function () { activerOngletMessages('groupe'); });
+        tabPriveBtn.addEventListener('click', function () { activerOngletMessages('prive'); });
+
+        function afficherConversationsGroupe() {
             if (!window.currentUser) {
                 messagesTournoisList.innerHTML = '<p style="text-align:center;">Connecte-toi (bouton Compte) pour voir tes conversations de tournoi.</p>';
                 return;
@@ -812,9 +939,9 @@
 
                     messagesTournoisList.innerHTML = mesTournois.map(function (t) {
                         return '<div class="tournoi-card">' +
-                            '<h3>' + t.nom + '</h3>' +
-                            '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + '</p>' +
-                            '<button type="button" class="inscrit-btn" data-id="' + t.id + '">Voir la conversation</button>' +
+                            '<h3>' + echapperHTML(t.nom) + '</h3>' +
+                            '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + echapperHTML(t.heure) : '') + '</p>' +
+                            '<button type="button" class="inscrit-btn" data-id="' + echapperHTML(t.id) + '">Voir la conversation</button>' +
                             '</div>';
                     }).join('');
                 })
@@ -822,6 +949,138 @@
                     console.error('Erreur Firebase :', error);
                     messagesTournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des conversations.</p>';
                 });
+        }
+
+        function afficherConversationsPrivees() {
+            if (!window.currentUser) {
+                messagesPriveList.innerHTML = '<p style="text-align:center;">Connecte-toi (bouton Compte) pour voir tes messages privés.</p>';
+                return;
+            }
+
+            messagesPriveList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+            conversationsPriveesRef.child(window.currentUser.uid).once('value')
+                .then(function (snapshot) {
+                    const data = snapshot.val() || {};
+                    conversationsPriveesCache = data;
+
+                    const conversations = Object.keys(data)
+                        .map(function (uid) { return Object.assign({ uid: uid }, data[uid]); })
+                        .sort(function (a, b) { return (b.since || 0) - (a.since || 0); });
+
+                    if (conversations.length === 0) {
+                        messagesPriveList.innerHTML = '<p style="text-align:center;">Aucune conversation privée pour le moment. Utilise le champ ci-dessus pour en démarrer une.</p>';
+                        return;
+                    }
+
+                    messagesPriveList.innerHTML = conversations.map(function (c) {
+                        return '<div class="tournoi-card">' +
+                            '<h3>' + echapperHTML(c.name || 'Utilisateur') + '</h3>' +
+                            '<button type="button" class="inscrit-btn prive-conv-btn" data-uid="' + echapperHTML(c.uid) + '">Voir la conversation</button>' +
+                            '</div>';
+                    }).join('');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    messagesPriveList.innerHTML = '<p style="text-align:center;">Erreur de chargement des messages privés.</p>';
+                });
+        }
+
+        // Démarre (ou retrouve) une conversation privée à partir d'un pseudo
+        priveNouvelleBtn.addEventListener('click', function () {
+            if (!window.currentUser) {
+                alert("Connecte-toi d'abord (bouton Compte) pour envoyer un message privé.");
+                return;
+            }
+
+            const pseudo = priveRechercheInput.value.trim();
+            if (!pseudo) {
+                alert('Entre le pseudo de la personne à qui tu veux écrire.');
+                return;
+            }
+
+            priveNouvelleBtn.disabled = true;
+
+            pseudosRef.child(cleanPseudoKey(pseudo)).once('value')
+                .then(function (snap) {
+                    if (!snap.exists()) {
+                        alert("Aucun compte trouvé avec ce pseudo.");
+                        return;
+                    }
+
+                    const autre = snap.val(); // { uid, name }
+                    if (autre.uid === window.currentUser.uid) {
+                        alert("Tu ne peux pas t'envoyer de message à toi-même !");
+                        return;
+                    }
+
+                    const maintenant = firebase.database.ServerValue.TIMESTAMP;
+
+                    // On enregistre la conversation des deux côtés (autorisé par les règles
+                    // car on est l'un des deux participants dans les deux cas)
+                    const maj = {};
+                    maj['conversationsPrivees/' + window.currentUser.uid + '/' + autre.uid] = { name: autre.name, since: maintenant };
+                    maj['conversationsPrivees/' + autre.uid + '/' + window.currentUser.uid] = { name: window.currentUser.name, since: maintenant };
+
+                    return db.ref().update(maj).then(function () {
+                        priveRechercheInput.value = '';
+                        ouvrirConversationPrivee(autre.uid, autre.name);
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible de démarrer la conversation : " + error.message);
+                })
+                .finally(function () {
+                    priveNouvelleBtn.disabled = false;
+                });
+        });
+
+        messagesPriveList.addEventListener('click', function (e) {
+            const btn = e.target.closest('.prive-conv-btn');
+            if (!btn) return;
+            const c = conversationsPriveesCache[btn.dataset.uid];
+            ouvrirConversationPrivee(btn.dataset.uid, c ? c.name : 'Utilisateur');
+        });
+
+        function ouvrirConversationPrivee(autreUid, autreName) {
+            if (!window.currentUser) return;
+
+            quitterConversation();
+
+            messagesListeView.classList.add('hidden');
+            messagesChatView.classList.remove('hidden');
+            chatTournoiTitre.textContent = autreName;
+            chatMessagesEl.innerHTML = '<p style="text-align:center; color:#777;">Chargement...</p>';
+
+            const monUid = window.currentUser.uid;
+            const paire = [monUid, autreUid].sort();
+
+            conversationOuverteRef = messagesPrivesRef.child(paire[0]).child(paire[1]);
+
+            conversationOuverteRef.on('value', function (msgSnap) {
+                const data = msgSnap.val() || {};
+                const messages = Object.keys(data)
+                    .map(function (key) { return data[key]; })
+                    .sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
+
+                if (messages.length === 0) {
+                    chatMessagesEl.innerHTML = '<p style="text-align:center; color:#777;">Aucun message pour l\'instant. Sois le premier à écrire !</p>';
+                } else {
+                    chatMessagesEl.innerHTML = messages.map(function (m) {
+                        const mine = m.uid === monUid;
+                        return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
+                            '<div class="auteur">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
+                            '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
+                            '</div>';
+                    }).join('');
+                }
+
+                chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+            }, function (error) {
+                console.error('Erreur Firebase :', error);
+                chatMessagesEl.innerHTML = '<p style="text-align:center;">Erreur de chargement des messages.</p>';
+            });
         }
 
         function ouvrirConversation(tournoiId) {
@@ -923,7 +1182,7 @@
 
         messageBtn.addEventListener('click', function () {
             afficherPage(messagePage);
-            afficherListeMessages();
+            activerOngletMessages('groupe');
         });
 
         backBtnMessage.addEventListener('click', function () {
@@ -968,6 +1227,8 @@
         const ADMIN_EMAIL = 'bussierenoa@gmail.com';
         const tournoisRef = db.ref('tournois');
         const messagesRef = db.ref('messages'); // séparé de "tournois" pour pouvoir rendre les infos de tournoi publiques sans exposer les conversations
+        const conversationsPriveesRef = db.ref('conversationsPrivees'); // conversationsPrivees/{monUid}/{autreUid} = { name, since }
+        const messagesPrivesRef = db.ref('messagesPrives'); // messagesPrives/{uidA}/{uidB}/{messageId}, uidA < uidB (ordre alphabétique)
 
         const tournoisPage = document.getElementById('tournois-page');
         const tournoisBtn = document.getElementById('tournois-btn');
@@ -1010,7 +1271,8 @@
         }
 
         // Génère le HTML d'une carte de tournoi (réutilisé sur la page Accueil et sur la page Tournois)
-        function genererCarteTournoiHTML(t) {
+        // afficherSupprimer : n'affiche le bouton de suppression admin que sur la page Tournois
+        function genererCarteTournoiHTML(t, afficherSupprimer) {
             const inscrits = t.inscrits || {};
             const nbInscrits = Object.keys(inscrits).length;
             const max = parseInt(t.participants, 10);
@@ -1032,6 +1294,7 @@
                 '<p>👥 ' + nbInscrits + ' / ' + t.participants + ' participants</p>' +
                 '<button type="button" class="' + classeBouton + '" data-id="' + echapperHTML(t.id) + '"' +
                     (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
+                (afficherSupprimer && estAdmin() ? '<button type="button" class="supprimer-btn" data-id="' + echapperHTML(t.id) + '">🗑️ Supprimer</button>' : '') +
                 '</div>';
         }
 
@@ -1107,7 +1370,7 @@
                     if (aVenir.length === 0) {
                         tournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
                     } else {
-                        tournoisList.innerHTML = aVenir.map(genererCarteTournoiHTML).join('');
+                        tournoisList.innerHTML = aVenir.map(function (t) { return genererCarteTournoiHTML(t, true); }).join('');
                     }
                 })
                 .catch(function (error) {
@@ -1118,20 +1381,52 @@
 
         tournoisBtn.addEventListener('click', afficherTournois);
 
+        // Supprime un tournoi (admin uniquement) ainsi que sa conversation associée
+        function supprimerTournoi(tournoiId, rafraichir) {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut supprimer un tournoi.");
+                return;
+            }
+
+            if (!confirm('Supprimer définitivement ce tournoi ? Cette action est irréversible.')) {
+                return;
+            }
+
+            tournoisRef.child(tournoiId).remove()
+                .then(function () {
+                    // On nettoie aussi la conversation liée (best-effort, ne bloque pas si ça échoue)
+                    return messagesRef.child(tournoiId).remove().catch(function (error) {
+                        console.error('Erreur lors de la suppression des messages :', error);
+                    });
+                })
+                .then(function () {
+                    rafraichir();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert('Impossible de supprimer le tournoi : ' + error.message);
+                });
+        }
+
         // Gère le clic sur "S'inscrire" / "Se désinscrire" (délégation d'événement
         // car les boutons sont créés dynamiquement)
         tournoisList.addEventListener('click', function (e) {
-            const btn = e.target.closest('.inscrit-btn');
-            if (!btn || btn.disabled) return;
-            gererInscription(btn.dataset.id, btn, afficherTournois);
+            const inscritBtn = e.target.closest('.inscrit-btn');
+            if (inscritBtn && !inscritBtn.disabled) {
+                gererInscription(inscritBtn.dataset.id, inscritBtn, afficherTournois);
+                return;
+            }
+            const supprimerBtn = e.target.closest('.supprimer-btn');
+            if (supprimerBtn) {
+                supprimerTournoi(supprimerBtn.dataset.id, afficherTournois);
+            }
         });
 
-        // Même délégation d'événement pour la liste de tournois affichée sur l'Accueil,
-        // afin de pouvoir s'inscrire directement depuis cette page
+        // Sur l'Accueil, cliquer sur une carte de tournoi amène simplement à la page Tournois
+        // (pas d'inscription possible directement depuis le menu)
         accueilTournoisList.addEventListener('click', function (e) {
-            const btn = e.target.closest('.inscrit-btn');
-            if (!btn || btn.disabled) return;
-            gererInscription(btn.dataset.id, btn, afficherTournoisAccueil);
+            if (!e.target.closest('.tournoi-card')) return;
+            afficherTournois();
         });
 
         adminAddBtn.addEventListener('click', function () {
