@@ -262,6 +262,53 @@
             white-space: nowrap;
         }
 
+        .recherche-joueur-panel {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .joueur-resultat-card {
+            background: white;
+            color: #333;
+            border-radius: 12px;
+            padding: 0.7rem 1rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+        }
+
+        .joueur-resultat-card .infos h4 {
+            font-size: 1rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .joueur-resultat-card .infos p {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .joueur-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .joueur-resultat-card button {
+            padding: 0.5rem 0.9rem;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
         .retour-btn {
             display: block;
             width: 100%;
@@ -426,6 +473,16 @@
     <main id="main-page">
         <div class="tournois-container">
             <h1 id="welcome" style="text-align:center; margin-bottom:1.5rem;">Ma page</h1>
+
+            <div class="recherche-joueur-panel">
+                <h2 style="margin-bottom:0.8rem;">Rechercher un joueur</h2>
+                <div class="nouvelle-conv-row">
+                    <input type="text" id="recherche-joueur-input" placeholder="Nom, identifiant ou #Tag...">
+                    <button type="button" id="recherche-joueur-btn">Rechercher</button>
+                </div>
+                <div id="recherche-joueur-resultats"></div>
+            </div>
+
             <h2>Tournois à venir</h2>
             <div id="accueil-tournois-list"></div>
         </div>
@@ -546,6 +603,8 @@
         const auth = firebase.auth();
         const comptesRef = db.ref('comptes');
         const pseudosRef = db.ref('pseudos'); // index public tag/identifiant Supercell -> {uid, name}, pour retrouver un utilisateur en message privé
+        const joueursRef = db.ref('joueurs'); // annuaire public des joueurs (name, tag, identifiant) pour la recherche sur l'Accueil
+        const amisRef = db.ref('amis'); // amis/{monUid}/{autreUid} = { name, since }
         // ============================================================
         // Authentification réelle : Firebase Auth (email + mot de passe).
         // Les profils (nom, trophées, tag...) sont stockés dans
@@ -694,6 +753,8 @@
                         if (identifiant) {
                             indexations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
                         }
+                        // Ajoute le joueur à l'annuaire public utilisé par la recherche sur l'Accueil
+                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant }));
                         return Promise.all(indexations).catch(function (error) {
                             console.error('Erreur indexation tag/identifiant :', error);
                         });
@@ -841,6 +902,125 @@
             afficherPage(mainPage);
             afficherTournoisAccueil();
         });
+
+        // --- Recherche de joueur (Accueil) ---
+        const rechercheJoueurInput = document.getElementById('recherche-joueur-input');
+        const rechercheJoueurBtn = document.getElementById('recherche-joueur-btn');
+        const rechercheJoueurResultats = document.getElementById('recherche-joueur-resultats');
+        let joueursCacheRecherche = {};
+
+        function rechercherJoueurs() {
+            const requete = rechercheJoueurInput.value.trim().toLowerCase();
+            if (!requete) {
+                rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Tape un nom, un identifiant ou un tag pour lancer la recherche.</p>';
+                return;
+            }
+
+            rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Recherche...</p>';
+
+            joueursRef.once('value')
+                .then(function (snapshot) {
+                    const data = snapshot.val() || {};
+                    joueursCacheRecherche = data;
+                    const monUid = window.currentUser ? window.currentUser.uid : null;
+
+                    const resultats = Object.keys(data)
+                        .filter(function (uid) { return uid !== monUid; })
+                        .map(function (uid) { return Object.assign({ uid: uid }, data[uid]); })
+                        .filter(function (j) {
+                            const nom = (j.name || '').toLowerCase();
+                            const tag = (j.tag || '').toLowerCase();
+                            const identifiant = (j.identifiant || '').toLowerCase();
+                            return nom.indexOf(requete) !== -1 || tag.indexOf(requete) !== -1 || identifiant.indexOf(requete) !== -1;
+                        })
+                        .slice(0, 5);
+
+                    if (resultats.length === 0) {
+                        rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Aucun joueur trouvé.</p>';
+                        return;
+                    }
+
+                    rechercheJoueurResultats.innerHTML = resultats.map(function (j) {
+                        const details = [j.tag ? '#' + echapperHTML(j.tag.replace(/^#/, '')) : null, j.identifiant ? echapperHTML(j.identifiant) : null]
+                            .filter(Boolean).join(' · ');
+                        return '<div class="joueur-resultat-card">' +
+                            '<div class="infos">' +
+                                '<h4>' + echapperHTML(j.name || 'Joueur') + '</h4>' +
+                                (details ? '<p>' + details + '</p>' : '') +
+                            '</div>' +
+                            '<div class="joueur-actions">' +
+                                '<button type="button" class="joueur-message-btn" data-uid="' + echapperHTML(j.uid) + '">Message</button>' +
+                                '<button type="button" class="joueur-ami-btn" data-uid="' + echapperHTML(j.uid) + '">🤝 Ajouter</button>' +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Erreur lors de la recherche.</p>';
+                });
+        }
+
+        rechercheJoueurBtn.addEventListener('click', rechercherJoueurs);
+
+        rechercheJoueurInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                rechercherJoueurs();
+            }
+        });
+
+        rechercheJoueurResultats.addEventListener('click', function (e) {
+            const messageBtnEl = e.target.closest('.joueur-message-btn');
+            if (messageBtnEl) {
+                if (!window.currentUser) {
+                    alert("Connecte-toi d'abord (bouton Compte) pour envoyer un message.");
+                    return;
+                }
+
+                const joueur = joueursCacheRecherche[messageBtnEl.dataset.uid];
+                if (!joueur) return;
+
+                afficherPage(messagePage);
+                activerOngletMessages('prive');
+                ouvrirConversationPrivee(messageBtnEl.dataset.uid, joueur.name || 'Joueur');
+                return;
+            }
+
+            const amiBtnEl = e.target.closest('.joueur-ami-btn');
+            if (amiBtnEl) {
+                ajouterAmi(amiBtnEl);
+            }
+        });
+
+        // Ajoute un joueur en ami (des deux côtés, autorisé par les règles car on est l'un des deux participants)
+        function ajouterAmi(btn) {
+            if (!window.currentUser) {
+                alert("Connecte-toi d'abord (bouton Compte) pour ajouter un ami.");
+                return;
+            }
+
+            const autreUid = btn.dataset.uid;
+            const joueur = joueursCacheRecherche[autreUid];
+            if (!joueur) return;
+
+            btn.disabled = true;
+
+            const maintenant = firebase.database.ServerValue.TIMESTAMP;
+            const maj = {};
+            maj['amis/' + window.currentUser.uid + '/' + autreUid] = { name: joueur.name || 'Joueur', since: maintenant };
+            maj['amis/' + autreUid + '/' + window.currentUser.uid] = { name: window.currentUser.name, since: maintenant };
+
+            db.ref().update(maj)
+                .then(function () {
+                    btn.textContent = 'Ami ✓';
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible d'ajouter cet ami : " + error.message);
+                    btn.disabled = false;
+                });
+        }
 
         const messagesListeView = document.getElementById('messages-liste-view');
         const messagesChatView = document.getElementById('messages-chat-view');
