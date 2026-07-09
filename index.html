@@ -2930,8 +2930,19 @@
                         if (!resultat.committed || !resultat.snapshot.val()) return;
 
                         const inscrits = t.inscrits || {};
-                        Object.keys(inscrits).forEach(function (uid) {
-                            ajusterCompteur(uid, 'tournoisJoues', 1);
+                        const operations = Object.keys(inscrits).map(function (uid) {
+                            return ajusterCompteur(uid, 'tournoisJoues', 1);
+                        });
+
+                        // Si une ou plusieurs mises à jour de compteur échouent (règles
+                        // Firebase, réseau, etc.), on remet le drapeau à false pour que
+                        // le tournoi soit retraité au prochain chargement au lieu de
+                        // rester bloqué à "traité" sans que les compteurs aient bougé.
+                        return Promise.all(operations).catch(function (error) {
+                            console.error('Erreur mise à jour des compteurs de participation, nouvel essai programmé :', error);
+                            return tournoisRef.child(id).child('statsAppliquees').set(false).then(function () {
+                                throw error;
+                            });
                         });
                     }).catch(function (error) {
                         console.error('Erreur traitement participations :', error);
