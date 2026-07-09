@@ -262,6 +262,24 @@
             white-space: nowrap;
         }
 
+        .discord-btn {
+            display: block;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto 1.5rem;
+            padding: 0.7rem;
+            border-radius: 999px;
+            background: #5865F2;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .discord-btn:hover {
+            opacity: 0.9;
+        }
+
         .recherche-joueur-panel {
             background: rgba(255, 255, 255, 0.12);
             border-radius: 12px;
@@ -608,12 +626,25 @@
         </div>
     </main>
 
+    <main id="liens-page" class="hidden">
+        <div class="tournois-container">
+            <h2>Liens</h2>
+            <div class="tournoi-card">
+                <h3>💬 Discord</h3>
+                <p>Rejoins le serveur pour discuter et suivre les annonces.</p>
+                <a href="https://discord.gg/BQSGP5pmt" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Rejoindre</a>
+            </div>
+            <button type="button" class="retour-btn" id="back-btn-liens">Retour</button>
+        </div>
+    </main>
+
 
     <nav>
         <button id="accueil-btn">Accueil</button>
         <button id="compte-btn">Compte</button>
         <button id="message-btn">Message</button>
         <button id="tournois-btn">Tournois</button>
+        <button id="liens-btn">Liens</button>
     </nav>
 
     <!-- Firebase SDK (compat, simple à utiliser sans outil de build) -->
@@ -893,20 +924,31 @@
         const mainPage = document.getElementById('main-page');
         const accountPage = document.getElementById('account-page');
         const messagePage = document.getElementById('message-page');
+        const liensPage = document.getElementById('liens-page');
         const accueilBtn = document.getElementById('accueil-btn');
         const compteBtn = document.getElementById('compte-btn');
         const messageBtn = document.getElementById('message-btn');
+        const liensBtn = document.getElementById('liens-btn');
+        const backBtnLiens = document.getElementById('back-btn-liens');
         const backBtn = document.getElementById('back-btn');
         const backBtnMessage = document.getElementById('back-btn-message');
 
         // Cache toutes les pages, puis affiche celle demandée
         function afficherPage(page) {
             quitterConversation();
-            [mainPage, accountPage, messagePage, tournoisPage].forEach(function (p) {
+            [mainPage, accountPage, messagePage, liensPage, tournoisPage].forEach(function (p) {
                 if (p) p.classList.add('hidden');
             });
             page.classList.remove('hidden');
         }
+
+        liensBtn.addEventListener('click', function () {
+            afficherPage(liensPage);
+        });
+
+        backBtnLiens.addEventListener('click', function () {
+            afficherPage(mainPage);
+        });
 
         const accueilTournoisList = document.getElementById('accueil-tournois-list');
 
