@@ -364,6 +364,12 @@
             margin-bottom: 0.15rem;
         }
 
+        .auteur-clickable {
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
         .chat-message .texte {
             background: #f0f2f5;
             padding: 0.5rem 0.8rem;
@@ -467,6 +473,14 @@
                 Pas encore de compte ?
                 <a href="#" id="go-to-signup-link">Créer un compte</a>
             </p>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="profil-overlay">
+        <div class="modal" id="profil-modal">
+            <h2 id="profil-nom">Profil</h2>
+            <p id="profil-details" style="text-align:center; color:#555; margin-bottom:1rem;"></p>
+            <button type="button" id="profil-fermer-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color:white; font-weight:600; cursor:pointer;">Fermer</button>
         </div>
     </div>
 
@@ -754,7 +768,7 @@
                             indexations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
                         }
                         // Ajoute le joueur à l'annuaire public utilisé par la recherche sur l'Accueil
-                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant }));
+                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies }));
                         return Promise.all(indexations).catch(function (error) {
                             console.error('Erreur indexation tag/identifiant :', error);
                         });
@@ -1029,6 +1043,61 @@
         const chatMessagesEl = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chat-input');
         const chatSendBtn = document.getElementById('chat-send-btn');
+
+        // --- Profil des joueurs (accessible en cliquant sur un nom dans un chat) ---
+        const profilOverlay = document.getElementById('profil-overlay');
+        const profilNomEl = document.getElementById('profil-nom');
+        const profilDetailsEl = document.getElementById('profil-details');
+        const profilFermerBtn = document.getElementById('profil-fermer-btn');
+
+        function afficherProfil(uid) {
+            if (!uid) return;
+
+            profilNomEl.textContent = 'Chargement...';
+            profilDetailsEl.textContent = '';
+            profilOverlay.classList.remove('hidden');
+
+            joueursRef.child(uid).once('value')
+                .then(function (snap) {
+                    if (!snap.exists()) {
+                        profilNomEl.textContent = 'Profil introuvable';
+                        profilDetailsEl.textContent = '';
+                        return;
+                    }
+
+                    const j = snap.val();
+                    profilNomEl.textContent = j.name || 'Joueur';
+
+                    const details = [
+                        j.tag ? '#' + j.tag.replace(/^#/, '') : null,
+                        j.identifiant ? 'Identifiant : ' + j.identifiant : null,
+                        (typeof j.trophies !== 'undefined' && j.trophies !== '') ? '🏆 ' + j.trophies + ' trophées' : null
+                    ].filter(Boolean);
+
+                    profilDetailsEl.innerHTML = details.map(function (d) { return echapperHTML(d); }).join('<br>');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    profilNomEl.textContent = 'Erreur de chargement';
+                });
+        }
+
+        chatMessagesEl.addEventListener('click', function (e) {
+            const nomEl = e.target.closest('.auteur-clickable');
+            if (!nomEl) return;
+            afficherProfil(nomEl.dataset.uid);
+        });
+
+        profilFermerBtn.addEventListener('click', function () {
+            profilOverlay.classList.add('hidden');
+        });
+
+        profilOverlay.addEventListener('click', function (e) {
+            if (e.target === profilOverlay) {
+                profilOverlay.classList.add('hidden');
+            }
+        });
+
         const backBtnChat = document.getElementById('back-btn-chat');
         const tabGroupeBtn = document.getElementById('tab-groupe-btn');
         const tabPriveBtn = document.getElementById('tab-prive-btn');
@@ -1257,7 +1326,7 @@
                     chatMessagesEl.innerHTML = messages.map(function (m) {
                         const mine = m.uid === monUid;
                         return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
-                            '<div class="auteur">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
+                            '<div class="auteur auteur-clickable" data-uid="' + echapperHTML(m.uid || '') + '">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
                             '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
                             '</div>';
                     }).join('');
@@ -1307,7 +1376,7 @@
                             chatMessagesEl.innerHTML = messages.map(function (m) {
                                 const mine = m.uid === monUid;
                                 return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
-                                    '<div class="auteur">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
+                                    '<div class="auteur auteur-clickable" data-uid="' + echapperHTML(m.uid || '') + '">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
                                     '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
                                     '</div>';
                             }).join('');
