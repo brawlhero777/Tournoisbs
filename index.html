@@ -436,6 +436,123 @@
         .chat-input-row button:hover {
             opacity: 0.9;
         }
+
+        nav button {
+            position: relative;
+        }
+
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e53935;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .msg-tab-btn {
+            position: relative;
+        }
+
+        .horodatage {
+            display: block;
+            font-size: 0.7rem;
+            color: #999;
+            margin-top: 0.15rem;
+        }
+
+        .chat-message.mine .horodatage {
+            text-align: right;
+        }
+
+        .avatar-select {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1.3rem;
+            background: white;
+            color: #333;
+        }
+
+        .avatar-emoji {
+            font-size: 1.4rem;
+            margin-right: 0.4rem;
+        }
+
+        .compte-avatar-large {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 0.6rem;
+        }
+
+        .recherche-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 0.6rem;
+            color: white;
+        }
+
+        .recherche-pagination button {
+            padding: 0.4rem 0.9rem;
+            border: none;
+            border-radius: 999px;
+            background: white;
+            color: #2575fc;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .recherche-pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .tournois-termines-titre {
+            margin-top: 1.5rem;
+        }
+
+        .tournoi-card.termine {
+            opacity: 0.9;
+        }
+
+        .vainqueur-texte {
+            font-weight: 600;
+            color: #2e7d32;
+        }
+
+        .email-non-verifie-banniere {
+            background: #fff3cd;
+            color: #7a5c00;
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .email-non-verifie-banniere button {
+            margin-top: 0.5rem;
+            padding: 0.4rem 0.9rem;
+            border: none;
+            border-radius: 999px;
+            background: #2575fc;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -464,6 +581,9 @@
 
                 <label for="identifiant">OU Identifiant Supercell</label>
                 <input type="text" id="identifiant" placeholder="Ton identifiant Supercell">
+
+                <label for="avatar">Avatar</label>
+                <select id="avatar" class="avatar-select"></select>
 
                 <button type="button" id="submit-btn">Créer mon compte</button>
             </form>
@@ -496,6 +616,7 @@
 
     <div class="overlay hidden" id="profil-overlay">
         <div class="modal" id="profil-modal">
+            <p id="profil-avatar" class="compte-avatar-large"></p>
             <h2 id="profil-nom">Profil</h2>
             <p id="profil-details" style="text-align:center; color:#555; margin-bottom:1rem;"></p>
             <button type="button" id="profil-fermer-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color:white; font-weight:600; cursor:pointer;">Fermer</button>
@@ -517,6 +638,9 @@
 
                 <label for="parametres-identifiant">OU Identifiant Supercell</label>
                 <input type="text" id="parametres-identifiant" placeholder="Ton identifiant Supercell">
+
+                <label for="parametres-avatar">Avatar</label>
+                <select id="parametres-avatar" class="avatar-select"></select>
 
                 <button type="button" id="parametres-save-btn">Enregistrer</button>
             </form>
@@ -546,6 +670,12 @@
     <main id="account-page" class="hidden">
         <div class="modal" style="text-align:center;">
             <h2>Mon compte</h2>
+            <p id="account-avatar" class="compte-avatar-large"></p>
+            <div id="account-email-non-verifie" class="email-non-verifie-banniere hidden">
+                ⚠️ Ton adresse email n'est pas vérifiée.
+                <br>
+                <button type="button" id="renvoyer-verification-btn">Renvoyer l'email de vérification</button>
+            </div>
             <p style="margin-bottom:0.6rem;"><strong>Nom :</strong> <span id="account-name"></span></p>
             <p style="margin-bottom:0.6rem;"><strong>Email :</strong> <span id="account-email"></span></p>
             <p style="margin-bottom:0.6rem;"><strong>Trophées :</strong> <span id="account-trophies"></span> 🏆</p>
@@ -585,6 +715,10 @@
             </div>
 
             <div id="tournois-list"></div>
+
+            <h2 class="tournois-termines-titre">Résultats des tournois terminés</h2>
+            <div id="tournois-termines-list"></div>
+
             <button type="button" class="retour-btn" id="back-btn-tournois">Retour</button>
         </div>
     </main>
@@ -596,7 +730,7 @@
 
                 <div class="msg-tabs">
                     <button type="button" id="tab-groupe-btn" class="msg-tab-btn active">Groupe</button>
-                    <button type="button" id="tab-prive-btn" class="msg-tab-btn">Privé</button>
+                    <button type="button" id="tab-prive-btn" class="msg-tab-btn">Privé<span class="badge hidden" id="prive-badge">0</span></button>
                 </div>
 
                 <div id="groupe-view">
@@ -652,7 +786,7 @@
     <nav>
         <button id="accueil-btn">Accueil</button>
         <button id="compte-btn">Compte</button>
-        <button id="message-btn">Message</button>
+        <button id="message-btn">Message<span class="badge hidden" id="message-badge">0</span></button>
         <button id="tournois-btn">Tournois</button>
         <button id="liens-btn">Liens</button>
     </nav>
@@ -695,6 +829,16 @@
         const overlay = document.getElementById('overlay');
         const welcome = document.getElementById('welcome');
 
+        // Liste des avatars disponibles (emoji), utilisée pour la création de compte
+        // et la modification du profil
+        const AVATARS_DISPONIBLES = ['🙂', '😎', '🔥', '⭐', '🎯', '🐉', '🦁', '👑', '💀', '🍀', '🤖', '🥷'];
+
+        function remplirSelectAvatars(selectEl, valeurSelectionnee) {
+            selectEl.innerHTML = AVATARS_DISPONIBLES.map(function (a) {
+                return '<option value="' + a + '"' + (a === valeurSelectionnee ? ' selected' : '') + '>' + a + '</option>';
+            }).join('');
+        }
+
         const signupModal = document.getElementById('signup-modal');
         const submitBtn = document.getElementById('submit-btn');
         const nameInput = document.getElementById('name');
@@ -704,6 +848,8 @@
         const trophiesInput = document.getElementById('trophies');
         const tagInput = document.getElementById('tag');
         const identifiantInput = document.getElementById('identifiant');
+        const avatarInput = document.getElementById('avatar');
+        remplirSelectAvatars(avatarInput, AVATARS_DISPONIBLES[0]);
         const goToLoginLink = document.getElementById('go-to-login-link');
 
         const loginModal = document.getElementById('login-modal');
@@ -739,7 +885,7 @@
         function chargerProfil(user) {
             return comptesRef.child(user.uid).once('value').then(function (snapshot) {
                 const profil = snapshot.val() || {};
-                window.currentUser = Object.assign({ uid: user.uid, email: user.email }, profil);
+                window.currentUser = Object.assign({ uid: user.uid, email: user.email, emailVerified: user.emailVerified }, profil);
                 return window.currentUser;
             });
         }
@@ -753,10 +899,12 @@
                     welcome.textContent = `Bienvenue, ${profil.name || profil.email} !`;
                     overlay.classList.add('hidden');
                     afficherTournoisAccueil();
+                    demarrerSuiviBadgeMessages();
                 });
             } else {
                 window.currentUser = null;
                 welcome.textContent = 'Ma page';
+                arreterSuiviBadgeMessages();
             }
         });
 
@@ -788,6 +936,7 @@
             const trophies = trophiesInput.value.trim();
             const tag = tagInput.value.trim();
             const identifiant = identifiantInput.value.trim();
+            const avatar = avatarInput.value || AVATARS_DISPONIBLES[0];
 
             if (!name || !email || !password || !trophies) {
                 alert('Merci de remplir tous les champs.');
@@ -821,9 +970,10 @@
                         trophies: trophies,
                         tag: tag,
                         identifiant: identifiant,
+                        avatar: avatar,
                         creeLe: firebase.database.ServerValue.TIMESTAMP
                     }).then(function () {
-                        window.currentUser = { uid, name, email, trophies, tag, identifiant };
+                        window.currentUser = { uid, name, email, trophies, tag, identifiant, avatar, emailVerified: credential.user.emailVerified };
                         // Indexe le tag et/ou l'identifiant Supercell publiquement pour retrouver ce compte en message privé
                         const indexations = [];
                         if (tag) {
@@ -833,7 +983,11 @@
                             indexations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
                         }
                         // Ajoute le joueur à l'annuaire public utilisé par la recherche sur l'Accueil
-                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies }));
+                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar }));
+                        // Envoie un email de vérification (ne bloque pas la création du compte si ça échoue)
+                        indexations.push(credential.user.sendEmailVerification().catch(function (error) {
+                            console.error('Erreur envoi email de vérification :', error);
+                        }));
                         return Promise.all(indexations).catch(function (error) {
                             console.error('Erreur indexation tag/identifiant :', error);
                         });
@@ -998,6 +1152,9 @@
         const rechercheJoueurBtn = document.getElementById('recherche-joueur-btn');
         const rechercheJoueurResultats = document.getElementById('recherche-joueur-resultats');
         let joueursCacheRecherche = {};
+        let rechercheResultatsComplets = [];
+        let recherchePageActuelle = 0;
+        const RECHERCHE_JOUEURS_PAR_PAGE = 5;
 
         function rechercherJoueurs() {
             const requete = rechercheJoueurInput.value.trim().toLowerCase();
@@ -1014,7 +1171,7 @@
                     joueursCacheRecherche = data;
                     const monUid = window.currentUser ? window.currentUser.uid : null;
 
-                    const resultats = Object.keys(data)
+                    rechercheResultatsComplets = Object.keys(data)
                         .filter(function (uid) { return uid !== monUid; })
                         .map(function (uid) { return Object.assign({ uid: uid }, data[uid]); })
                         .filter(function (j) {
@@ -1022,33 +1179,52 @@
                             const tag = (j.tag || '').toLowerCase();
                             const identifiant = (j.identifiant || '').toLowerCase();
                             return nom.indexOf(requete) !== -1 || tag.indexOf(requete) !== -1 || identifiant.indexOf(requete) !== -1;
-                        })
-                        .slice(0, 5);
+                        });
 
-                    if (resultats.length === 0) {
-                        rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Aucun joueur trouvé.</p>';
-                        return;
-                    }
-
-                    rechercheJoueurResultats.innerHTML = resultats.map(function (j) {
-                        const details = [j.tag ? '#' + echapperHTML(j.tag.replace(/^#/, '')) : null, j.identifiant ? echapperHTML(j.identifiant) : null]
-                            .filter(Boolean).join(' · ');
-                        return '<div class="joueur-resultat-card">' +
-                            '<div class="infos">' +
-                                '<h4>' + echapperHTML(j.name || 'Joueur') + '</h4>' +
-                                (details ? '<p>' + details + '</p>' : '') +
-                            '</div>' +
-                            '<div class="joueur-actions">' +
-                                '<button type="button" class="joueur-message-btn" data-uid="' + echapperHTML(j.uid) + '">Message</button>' +
-                                '<button type="button" class="joueur-ami-btn" data-uid="' + echapperHTML(j.uid) + '">🤝 Ajouter</button>' +
-                            '</div>' +
-                        '</div>';
-                    }).join('');
+                    recherchePageActuelle = 0;
+                    afficherPageResultatsRecherche();
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
                     rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Erreur lors de la recherche.</p>';
                 });
+        }
+
+        // Affiche la page courante des résultats de recherche (pagination côté client)
+        function afficherPageResultatsRecherche() {
+            if (rechercheResultatsComplets.length === 0) {
+                rechercheJoueurResultats.innerHTML = '<p style="text-align:center;">Aucun joueur trouvé.</p>';
+                return;
+            }
+
+            const totalPages = Math.ceil(rechercheResultatsComplets.length / RECHERCHE_JOUEURS_PAR_PAGE);
+            const debut = recherchePageActuelle * RECHERCHE_JOUEURS_PAR_PAGE;
+            const page = rechercheResultatsComplets.slice(debut, debut + RECHERCHE_JOUEURS_PAR_PAGE);
+
+            const cartesHTML = page.map(function (j) {
+                const details = [j.tag ? '#' + echapperHTML(j.tag.replace(/^#/, '')) : null, j.identifiant ? echapperHTML(j.identifiant) : null]
+                    .filter(Boolean).join(' · ');
+                return '<div class="joueur-resultat-card">' +
+                    '<div class="infos">' +
+                        '<h4><span class="avatar-emoji">' + echapperHTML(j.avatar || '🙂') + '</span>' + echapperHTML(j.name || 'Joueur') + '</h4>' +
+                        (details ? '<p>' + details + '</p>' : '') +
+                    '</div>' +
+                    '<div class="joueur-actions">' +
+                        '<button type="button" class="joueur-message-btn" data-uid="' + echapperHTML(j.uid) + '">Message</button>' +
+                        '<button type="button" class="joueur-ami-btn" data-uid="' + echapperHTML(j.uid) + '">🤝 Ajouter</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            const paginationHTML = totalPages > 1
+                ? '<div class="recherche-pagination">' +
+                    '<button type="button" id="recherche-page-prec"' + (recherchePageActuelle === 0 ? ' disabled' : '') + '>← Précédent</button>' +
+                    '<span>Page ' + (recherchePageActuelle + 1) + ' / ' + totalPages + '</span>' +
+                    '<button type="button" id="recherche-page-suivant"' + (recherchePageActuelle >= totalPages - 1 ? ' disabled' : '') + '>Suivant →</button>' +
+                '</div>'
+                : '';
+
+            rechercheJoueurResultats.innerHTML = cartesHTML + paginationHTML;
         }
 
         rechercheJoueurBtn.addEventListener('click', rechercherJoueurs);
@@ -1061,6 +1237,22 @@
         });
 
         rechercheJoueurResultats.addEventListener('click', function (e) {
+            if (e.target.closest('#recherche-page-prec')) {
+                if (recherchePageActuelle > 0) {
+                    recherchePageActuelle -= 1;
+                    afficherPageResultatsRecherche();
+                }
+                return;
+            }
+            if (e.target.closest('#recherche-page-suivant')) {
+                const totalPages = Math.ceil(rechercheResultatsComplets.length / RECHERCHE_JOUEURS_PAR_PAGE);
+                if (recherchePageActuelle < totalPages - 1) {
+                    recherchePageActuelle += 1;
+                    afficherPageResultatsRecherche();
+                }
+                return;
+            }
+
             const messageBtnEl = e.target.closest('.joueur-message-btn');
             if (messageBtnEl) {
                 if (!window.currentUser) {
@@ -1124,6 +1316,7 @@
         const profilOverlay = document.getElementById('profil-overlay');
         const profilNomEl = document.getElementById('profil-nom');
         const profilDetailsEl = document.getElementById('profil-details');
+        const profilAvatarEl = document.getElementById('profil-avatar');
         const profilFermerBtn = document.getElementById('profil-fermer-btn');
 
         function afficherProfil(uid) {
@@ -1131,6 +1324,7 @@
 
             profilNomEl.textContent = 'Chargement...';
             profilDetailsEl.textContent = '';
+            profilAvatarEl.textContent = '';
             profilOverlay.classList.remove('hidden');
 
             joueursRef.child(uid).once('value')
@@ -1143,6 +1337,7 @@
 
                     const j = snap.val();
                     profilNomEl.textContent = j.name || 'Joueur';
+                    profilAvatarEl.textContent = j.avatar || '🙂';
 
                     const details = [
                         j.tag ? '#' + j.tag.replace(/^#/, '') : null,
@@ -1389,6 +1584,7 @@
             const paire = [monUid, autreUid].sort();
 
             conversationOuverteRef = messagesPrivesRef.child(paire[0]).child(paire[1]);
+            const lastReadRef = conversationsPriveesRef.child(monUid).child(autreUid).child('lastRead');
 
             conversationOuverteRef.on('value', function (msgSnap) {
                 const data = msgSnap.val() || {};
@@ -1396,19 +1592,13 @@
                     .map(function (key) { return data[key]; })
                     .sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
-                if (messages.length === 0) {
-                    chatMessagesEl.innerHTML = '<p style="text-align:center; color:#777;">Aucun message pour l\'instant. Sois le premier à écrire !</p>';
-                } else {
-                    chatMessagesEl.innerHTML = messages.map(function (m) {
-                        const mine = m.uid === monUid;
-                        return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
-                            '<div class="auteur auteur-clickable" data-uid="' + echapperHTML(m.uid || '') + '">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
-                            '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
-                            '</div>';
-                    }).join('');
-                }
-
+                chatMessagesEl.innerHTML = genererMessagesHTML(messages, monUid);
                 chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+                // Marque la conversation comme lue à l'instant (met à jour le badge de notification)
+                lastReadRef.set(firebase.database.ServerValue.TIMESTAMP).catch(function (error) {
+                    console.error('Erreur mise à jour lastRead :', error);
+                });
             }, function (error) {
                 console.error('Erreur Firebase :', error);
                 chatMessagesEl.innerHTML = '<p style="text-align:center;">Erreur de chargement des messages.</p>';
@@ -1446,18 +1636,7 @@
                             .map(function (key) { return data[key]; })
                             .sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
-                        if (messages.length === 0) {
-                            chatMessagesEl.innerHTML = '<p style="text-align:center; color:#777;">Aucun message pour l\'instant. Sois le premier à écrire !</p>';
-                        } else {
-                            chatMessagesEl.innerHTML = messages.map(function (m) {
-                                const mine = m.uid === monUid;
-                                return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
-                                    '<div class="auteur auteur-clickable" data-uid="' + echapperHTML(m.uid || '') + '">' + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
-                                    '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
-                                    '</div>';
-                            }).join('');
-                        }
-
+                        chatMessagesEl.innerHTML = genererMessagesHTML(messages, monUid);
                         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
                     }, function (error) {
                         console.error('Erreur Firebase :', error);
@@ -1484,6 +1663,7 @@
 
             conversationOuverteRef.push({
                 auteur: window.currentUser.name || window.currentUser.email || 'Joueur',
+                avatar: window.currentUser.avatar || '🙂',
                 uid: window.currentUser.uid,
                 texte: texte,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -1522,6 +1702,7 @@
         });
 
         function remplirInfosCompte(user) {
+            document.getElementById('account-avatar').textContent = user.avatar || '🙂';
             document.getElementById('account-name').textContent = user.name || '';
             document.getElementById('account-email').textContent = user.email || '';
             document.getElementById('account-trophies').textContent = user.trophies || '';
@@ -1531,6 +1712,9 @@
 
             const identifiantEl = document.getElementById('account-identifiant');
             identifiantEl.innerHTML = '<strong>Identifiant Supercell :</strong> ' + (user.identifiant ? echapperHTML(user.identifiant) : 'Non renseigné');
+
+            const bannierEl = document.getElementById('account-email-non-verifie');
+            bannierEl.classList.toggle('hidden', !!user.emailVerified);
         }
 
         compteBtn.addEventListener('click', function () {
@@ -1552,6 +1736,7 @@
         const parametresTrophiesInput = document.getElementById('parametres-trophies');
         const parametresTagInput = document.getElementById('parametres-tag');
         const parametresIdentifiantInput = document.getElementById('parametres-identifiant');
+        const parametresAvatarInput = document.getElementById('parametres-avatar');
         const parametresSaveBtn = document.getElementById('parametres-save-btn');
         const parametresAnnulerBtn = document.getElementById('parametres-annuler-btn');
         const parametresErreur = document.getElementById('parametres-erreur');
@@ -1564,6 +1749,7 @@
             parametresTrophiesInput.value = window.currentUser.trophies || '';
             parametresTagInput.value = window.currentUser.tag || '';
             parametresIdentifiantInput.value = window.currentUser.identifiant || '';
+            remplirSelectAvatars(parametresAvatarInput, window.currentUser.avatar || AVATARS_DISPONIBLES[0]);
             parametresOverlay.classList.remove('hidden');
         });
 
@@ -1578,6 +1764,7 @@
             const trophies = parametresTrophiesInput.value.trim();
             const tag = parametresTagInput.value.trim();
             const identifiant = parametresIdentifiantInput.value.trim();
+            const avatar = parametresAvatarInput.value || AVATARS_DISPONIBLES[0];
 
             if (!name || !trophies) {
                 parametresErreur.textContent = 'Merci de remplir au moins le nom et les trophées.';
@@ -1601,7 +1788,8 @@
                 name: name,
                 trophies: trophies,
                 tag: tag,
-                identifiant: identifiant
+                identifiant: identifiant,
+                avatar: avatar
             })
                 .then(function () {
                     const operations = [];
@@ -1620,12 +1808,12 @@
                         operations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
                     }
                     // Met à jour l'annuaire public utilisé par la recherche et les profils
-                    operations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies }));
+                    operations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar }));
 
                     return Promise.all(operations);
                 })
                 .then(function () {
-                    window.currentUser = Object.assign({}, window.currentUser, { name, trophies, tag, identifiant });
+                    window.currentUser = Object.assign({}, window.currentUser, { name, trophies, tag, identifiant, avatar });
                     remplirInfosCompte(window.currentUser);
                     parametresOverlay.classList.add('hidden');
                 })
@@ -1636,6 +1824,26 @@
                 .finally(function () {
                     parametresSaveBtn.disabled = false;
                     parametresSaveBtn.textContent = 'Enregistrer';
+                });
+        });
+
+        const renvoyerVerificationBtn = document.getElementById('renvoyer-verification-btn');
+        renvoyerVerificationBtn.addEventListener('click', function () {
+            if (!auth.currentUser) return;
+            renvoyerVerificationBtn.disabled = true;
+            renvoyerVerificationBtn.textContent = 'Envoi...';
+
+            auth.currentUser.sendEmailVerification()
+                .then(function () {
+                    alert('Un nouvel email de vérification a été envoyé à ' + auth.currentUser.email + '.');
+                })
+                .catch(function (error) {
+                    console.error('Erreur envoi email de vérification :', error);
+                    alert("Impossible d'envoyer l'email : " + messageErreurAuth(error));
+                })
+                .finally(function () {
+                    renvoyerVerificationBtn.disabled = false;
+                    renvoyerVerificationBtn.textContent = "Renvoyer l'email de vérification";
                 });
         });
 
@@ -1653,12 +1861,96 @@
         const ADMIN_EMAIL = 'bussierenoa@gmail.com';
         const tournoisRef = db.ref('tournois');
         const messagesRef = db.ref('messages'); // séparé de "tournois" pour pouvoir rendre les infos de tournoi publiques sans exposer les conversations
-        const conversationsPriveesRef = db.ref('conversationsPrivees'); // conversationsPrivees/{monUid}/{autreUid} = { name, since }
+        const conversationsPriveesRef = db.ref('conversationsPrivees'); // conversationsPrivees/{monUid}/{autreUid} = { name, since, lastRead }
         const messagesPrivesRef = db.ref('messagesPrives'); // messagesPrives/{uidA}/{uidB}/{messageId}, uidA < uidB (ordre alphabétique)
+
+        // --- Badge de notification pour les nouveaux messages privés ---
+        const messageBadgeEl = document.getElementById('message-badge');
+        const priveBadgeEl = document.getElementById('prive-badge');
+        let conversationsListenerRef = null; // écoute la liste des conversations privées
+        let messagesListenersRefs = []; // écoutes des messages de chaque conversation, à détacher quand la liste change
+        let compteursNonLus = {};
+
+        function majBadgeMessage(total) {
+            [messageBadgeEl, priveBadgeEl].forEach(function (el) {
+                if (!el) return;
+                if (total > 0) {
+                    el.textContent = total > 99 ? '99+' : String(total);
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function detacherEcoutesMessagesBadge() {
+            messagesListenersRefs.forEach(function (r) { r.ref.off('value', r.callback); });
+            messagesListenersRefs = [];
+        }
+
+        function arreterSuiviBadgeMessages() {
+            if (conversationsListenerRef) {
+                conversationsListenerRef.off('value');
+                conversationsListenerRef = null;
+            }
+            detacherEcoutesMessagesBadge();
+            compteursNonLus = {};
+            majBadgeMessage(0);
+        }
+
+        function recalculerTotalNonLus() {
+            const total = Object.keys(compteursNonLus).reduce(function (somme, cle) {
+                return somme + compteursNonLus[cle];
+            }, 0);
+            majBadgeMessage(total);
+        }
+
+        // Écoute en temps réel les conversations privées de l'utilisateur connecté,
+        // et pour chacune le nombre de messages reçus après la dernière lecture (lastRead)
+        function demarrerSuiviBadgeMessages() {
+            arreterSuiviBadgeMessages();
+            if (!window.currentUser) return;
+
+            const monUid = window.currentUser.uid;
+            conversationsListenerRef = conversationsPriveesRef.child(monUid);
+
+            conversationsListenerRef.on('value', function (snap) {
+                detacherEcoutesMessagesBadge();
+                compteursNonLus = {};
+
+                const data = snap.val() || {};
+                const uidsAutres = Object.keys(data);
+
+                if (uidsAutres.length === 0) {
+                    majBadgeMessage(0);
+                    return;
+                }
+
+                uidsAutres.forEach(function (autreUid) {
+                    const lastRead = data[autreUid].lastRead || 0;
+                    const paire = [monUid, autreUid].sort();
+                    const msgRef = messagesPrivesRef.child(paire[0]).child(paire[1]);
+
+                    const callback = function (msgSnap) {
+                        const messages = msgSnap.val() || {};
+                        const nonLus = Object.keys(messages).filter(function (cle) {
+                            const m = messages[cle];
+                            return m.uid !== monUid && (m.timestamp || 0) > lastRead;
+                        }).length;
+                        compteursNonLus[autreUid] = nonLus;
+                        recalculerTotalNonLus();
+                    };
+
+                    msgRef.on('value', callback);
+                    messagesListenersRefs.push({ ref: msgRef, callback: callback });
+                });
+            });
+        }
 
         const tournoisPage = document.getElementById('tournois-page');
         const tournoisBtn = document.getElementById('tournois-btn');
         const tournoisList = document.getElementById('tournois-list');
+        const tournoisTerminesList = document.getElementById('tournois-termines-list');
         const backBtnTournois = document.getElementById('back-btn-tournois');
         const adminAddBtn = document.getElementById('admin-add-btn');
         const adminAddForm = document.getElementById('admin-add-form');
@@ -1696,6 +1988,29 @@
             return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         }
 
+        // Formate un timestamp Firebase (ms) en heure lisible (ex: 14:37)
+        function formatHeureMessage(timestamp) {
+            if (!timestamp) return '';
+            const d = new Date(timestamp);
+            return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Génère le HTML de la liste des messages d'une conversation (groupe ou privée),
+        // avec l'auteur (cliquable), le texte et l'horodatage
+        function genererMessagesHTML(messages, monUid) {
+            if (messages.length === 0) {
+                return '<p style="text-align:center; color:#777;">Aucun message pour l\'instant. Sois le premier à écrire !</p>';
+            }
+            return messages.map(function (m) {
+                const mine = m.uid === monUid;
+                return '<div class="chat-message' + (mine ? ' mine' : '') + '">' +
+                    '<div class="auteur auteur-clickable" data-uid="' + echapperHTML(m.uid || '') + '">' + (m.avatar ? echapperHTML(m.avatar) + ' ' : '') + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
+                    '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
+                    '<span class="horodatage">' + formatHeureMessage(m.timestamp) + '</span>' +
+                    '</div>';
+            }).join('');
+        }
+
         // Génère le HTML d'une carte de tournoi (réutilisé sur la page Accueil et sur la page Tournois)
         // afficherSupprimer : n'affiche le bouton de suppression admin que sur la page Tournois
         function genererCarteTournoiHTML(t, afficherSupprimer) {
@@ -1722,6 +2037,43 @@
                     (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
                 (afficherSupprimer && estAdmin() ? '<button type="button" class="supprimer-btn" data-id="' + echapperHTML(t.id) + '">🗑️ Supprimer</button>' : '') +
                 '</div>';
+        }
+
+        // Génère le HTML d'une carte de tournoi terminé, avec le résultat (vainqueur)
+        // et, pour l'admin, un champ pour le renseigner
+        function genererCarteTournoiTermineHTML(t) {
+            const vainqueur = t.vainqueur || '';
+            return '<div class="tournoi-card termine">' +
+                '<h3>' + echapperHTML(t.nom) + '</h3>' +
+                '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + echapperHTML(t.heure) : '') + '</p>' +
+                (vainqueur
+                    ? '<p>🏆 Vainqueur : <span class="vainqueur-texte">' + echapperHTML(vainqueur) + '</span></p>'
+                    : '<p style="color:#888;">Résultat pas encore renseigné</p>') +
+                (estAdmin()
+                    ? '<div class="nouvelle-conv-row" style="margin-top:0.6rem;">' +
+                        '<input type="text" class="vainqueur-input" data-id="' + echapperHTML(t.id) + '" placeholder="Nom du vainqueur" value="' + echapperHTML(vainqueur) + '">' +
+                        '<button type="button" class="vainqueur-btn" data-id="' + echapperHTML(t.id) + '">Valider</button>' +
+                      '</div>' +
+                      '<button type="button" class="supprimer-btn" data-id="' + echapperHTML(t.id) + '">🗑️ Supprimer</button>'
+                    : '') +
+                '</div>';
+        }
+
+        // Enregistre le vainqueur d'un tournoi terminé (admin uniquement)
+        function definirVainqueurTournoi(tournoiId, nomVainqueur, rafraichir) {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut renseigner le résultat d'un tournoi.");
+                return;
+            }
+
+            tournoisRef.child(tournoiId).child('vainqueur').set(nomVainqueur)
+                .then(function () {
+                    rafraichir();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible d'enregistrer le vainqueur : " + error.message);
+                });
         }
 
         // Gère l'inscription/désinscription à un tournoi (réutilisé sur les deux pages)
@@ -1781,16 +2133,25 @@
             }
 
             tournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+            tournoisTerminesList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
 
             tournoisRef.once('value')
                 .then(function (snapshot) {
                     const data = snapshot.val() || {};
                     const maintenant = new Date();
-                    const aVenir = Object.keys(data)
-                        .map(function (key) { return Object.assign({ id: key }, data[key]); })
+                    const tousLesTournois = Object.keys(data)
+                        .map(function (key) { return Object.assign({ id: key }, data[key]); });
+
+                    const aVenir = tousLesTournois
                         .filter(function (t) { return new Date(t.date + 'T' + (t.heure || '00:00')) >= maintenant; })
                         .sort(function (a, b) {
                             return new Date(a.date + 'T' + (a.heure || '00:00')) - new Date(b.date + 'T' + (b.heure || '00:00'));
+                        });
+
+                    const termines = tousLesTournois
+                        .filter(function (t) { return new Date(t.date + 'T' + (t.heure || '00:00')) < maintenant; })
+                        .sort(function (a, b) {
+                            return new Date(b.date + 'T' + (b.heure || '00:00')) - new Date(a.date + 'T' + (a.heure || '00:00'));
                         });
 
                     if (aVenir.length === 0) {
@@ -1798,10 +2159,17 @@
                     } else {
                         tournoisList.innerHTML = aVenir.map(function (t) { return genererCarteTournoiHTML(t, true); }).join('');
                     }
+
+                    if (termines.length === 0) {
+                        tournoisTerminesList.innerHTML = '<p style="text-align:center;">Aucun tournoi terminé pour le moment.</p>';
+                    } else {
+                        tournoisTerminesList.innerHTML = termines.map(function (t) { return genererCarteTournoiTermineHTML(t); }).join('');
+                    }
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
                     tournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des tournois.</p>';
+                    tournoisTerminesList.innerHTML = '';
                 });
         }
 
@@ -1842,6 +2210,26 @@
                 gererInscription(inscritBtn.dataset.id, inscritBtn, afficherTournois);
                 return;
             }
+            const supprimerBtn = e.target.closest('.supprimer-btn');
+            if (supprimerBtn) {
+                supprimerTournoi(supprimerBtn.dataset.id, afficherTournois);
+            }
+        });
+
+        // Gère le clic sur "Valider" (vainqueur) ou "Supprimer" pour les tournois terminés
+        tournoisTerminesList.addEventListener('click', function (e) {
+            const vainqueurBtn = e.target.closest('.vainqueur-btn');
+            if (vainqueurBtn) {
+                const input = tournoisTerminesList.querySelector('.vainqueur-input[data-id="' + vainqueurBtn.dataset.id + '"]');
+                const nomVainqueur = input ? input.value.trim() : '';
+                if (!nomVainqueur) {
+                    alert('Merci de renseigner le nom du vainqueur.');
+                    return;
+                }
+                definirVainqueurTournoi(vainqueurBtn.dataset.id, nomVainqueur, afficherTournois);
+                return;
+            }
+
             const supprimerBtn = e.target.closest('.supprimer-btn');
             if (supprimerBtn) {
                 supprimerTournoi(supprimerBtn.dataset.id, afficherTournois);
