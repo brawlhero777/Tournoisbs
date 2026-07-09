@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Inscris-toi aux tournois Brawl Stars, retrouve d'autres joueurs, discute en temps réel et suis les résultats des tournois passés.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
     <title>Tournois Brawl Stars</title>
     <style>
         * {
@@ -557,7 +559,14 @@
 </head>
 <body>
 
-    <div class="overlay" id="overlay">
+    <div class="overlay" id="chargement-overlay">
+        <div class="modal" style="text-align:center;">
+            <p style="font-size:2.2rem; margin-bottom:0.5rem;">⏳</p>
+            <p style="color:#555;">Chargement...</p>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="overlay">
         <div class="modal" id="signup-modal">
             <h2>Créer un compte</h2>
             <form id="signup-form">
@@ -584,6 +593,12 @@
 
                 <label for="avatar">Avatar</label>
                 <select id="avatar" class="avatar-select"></select>
+
+                <!-- Champ piège anti-bot (honeypot) : invisible pour un humain, souvent rempli automatiquement par les bots -->
+                <div style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;" aria-hidden="true">
+                    <label for="site-web">Laissez ce champ vide</label>
+                    <input type="text" id="site-web" name="site-web" tabindex="-1" autocomplete="off">
+                </div>
 
                 <button type="button" id="submit-btn">Créer mon compte</button>
             </form>
@@ -849,6 +864,8 @@
         const tagInput = document.getElementById('tag');
         const identifiantInput = document.getElementById('identifiant');
         const avatarInput = document.getElementById('avatar');
+        const honeypotInput = document.getElementById('site-web');
+        const DELAI_MIN_INSCRIPTION_MS = 2500; // délai minimum réaliste pour un humain remplissant le formulaire
         remplirSelectAvatars(avatarInput, AVATARS_DISPONIBLES[0]);
         const goToLoginLink = document.getElementById('go-to-login-link');
 
@@ -859,10 +876,44 @@
         const forgotPasswordLink = document.getElementById('forgot-password-link');
         const goToSignupLink = document.getElementById('go-to-signup-link');
 
+        // Ajoute un bouton "œil" à côté d'un champ mot de passe pour en afficher/masquer le contenu
+        function ajouterToggleMotDePasse(input) {
+            if (!input || input.dataset.toggleAjoute) return;
+            input.dataset.toggleAjoute = '1';
+
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+            wrapper.style.marginBottom = '1rem';
+
+            input.parentNode.insertBefore(wrapper, input);
+            wrapper.appendChild(input);
+            input.style.marginBottom = '0';
+            input.style.paddingRight = '2.4rem';
+            input.style.width = '100%';
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.textContent = '👁️';
+            toggleBtn.setAttribute('aria-label', 'Afficher le mot de passe');
+            toggleBtn.style.cssText = 'position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:1.1rem; padding:0.2rem; line-height:1;';
+
+            toggleBtn.addEventListener('click', function () {
+                const affiche = input.type === 'text';
+                input.type = affiche ? 'password' : 'text';
+                toggleBtn.textContent = affiche ? '👁️' : '🙈';
+                toggleBtn.setAttribute('aria-label', affiche ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+            });
+
+            wrapper.appendChild(toggleBtn);
+        }
+
+        [passwordInput, passwordConfirmInput, loginPasswordInput].forEach(ajouterToggleMotDePasse);
+
         function afficherModaleInscription() {
             overlay.classList.remove('hidden');
             signupModal.classList.remove('hidden');
             loginModal.classList.add('hidden');
+            signupModal.dataset.ouvertureTimestamp = Date.now();
         }
 
         function afficherModaleConnexion() {
@@ -894,10 +945,13 @@
         // (Firebase Auth conserve la session dans le navigateur : plus besoin
         // de retaper son mot de passe à chaque visite tant qu'on ne s'est pas déconnecté)
         auth.onAuthStateChanged(function (user) {
+            const chargementOverlay = document.getElementById('chargement-overlay');
+
             if (user) {
                 chargerProfil(user).then(function (profil) {
                     welcome.textContent = `Bienvenue, ${profil.name || profil.email} !`;
                     overlay.classList.add('hidden');
+                    chargementOverlay.classList.add('hidden');
                     afficherTournoisAccueil();
                     demarrerSuiviBadgeMessages();
                 });
@@ -905,6 +959,9 @@
                 window.currentUser = null;
                 welcome.textContent = 'Ma page';
                 arreterSuiviBadgeMessages();
+                chargementOverlay.classList.add('hidden');
+                overlay.classList.remove('hidden');
+                signupModal.dataset.ouvertureTimestamp = Date.now();
             }
         });
 
@@ -929,6 +986,20 @@
         }
 
         function validerCompte() {
+            // Piège anti-bot : un vrai humain ne remplit jamais ce champ invisible
+            if (honeypotInput && honeypotInput.value.trim() !== '') {
+                console.warn('Inscription bloquée : champ piège rempli (bot probable).');
+                alert("Impossible de créer le compte, réessaie plus tard.");
+                return;
+            }
+
+            // Anti-bot : une inscription soumise trop vite après l'ouverture du formulaire est suspecte
+            const ouvertureTimestamp = parseInt(signupModal.dataset.ouvertureTimestamp, 10) || 0;
+            if (Date.now() - ouvertureTimestamp < DELAI_MIN_INSCRIPTION_MS) {
+                alert("Merci de prendre un instant pour vérifier tes informations avant de valider.");
+                return;
+            }
+
             const name = nameInput.value.trim();
             const email = emailInput.value.trim();
             const password = passwordInput.value;
@@ -1379,6 +1450,8 @@
         const priveNouvelleBtn = document.getElementById('prive-nouvelle-btn');
 
         let conversationOuverteRef = null; // référence Firebase actuellement écoutée en temps réel
+        let dernierEnvoiMessage = 0; // timestamp (ms) du dernier message envoyé, pour limiter le spam
+        const DELAI_MIN_ENTRE_MESSAGES_MS = 2000;
         let mesTournoisCache = {};
         let conversationsPriveesCache = {};
         let ongletMessagesActif = 'groupe'; // 'groupe' ou 'prive'
@@ -1659,6 +1732,19 @@
             const texte = chatInput.value.trim();
             if (!texte || !conversationOuverteRef || !window.currentUser) return;
 
+            const maintenant = Date.now();
+            const tempsRestant = DELAI_MIN_ENTRE_MESSAGES_MS - (maintenant - dernierEnvoiMessage);
+            if (tempsRestant > 0) {
+                alert('Merci de patienter ' + Math.ceil(tempsRestant / 1000) + ' seconde(s) avant d\'envoyer un nouveau message.');
+                return;
+            }
+
+            if (texte.length > 500) {
+                alert('Ton message est trop long (500 caractères maximum).');
+                return;
+            }
+
+            dernierEnvoiMessage = maintenant;
             chatSendBtn.disabled = true;
 
             conversationOuverteRef.push({
