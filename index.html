@@ -508,6 +508,44 @@
             margin-top: 0.15rem;
         }
 
+        .notification-card {
+            background: white;
+            color: #333;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.7rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid transparent;
+        }
+
+        .notification-card.non-lue {
+            border-left-color: #2575fc;
+            background: #f5f8ff;
+        }
+
+        .notification-card .notif-texte {
+            font-size: 0.92rem;
+            line-height: 1.4;
+        }
+
+        .notification-card .notif-date {
+            display: block;
+            font-size: 0.72rem;
+            color: #999;
+            margin-top: 0.35rem;
+        }
+
+        .notification-card .notif-supprimer {
+            margin-top: 0.5rem;
+            background: none;
+            border: none;
+            color: #c62828;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+        }
+
         .chat-message.mine .horodatage {
             text-align: right;
         }
@@ -974,10 +1012,19 @@
     </main>
 
 
+    <main id="notifications-page" class="hidden">
+        <div class="tournois-container">
+            <h2>📥 Boîte de réception</h2>
+            <div id="notifications-list"></div>
+            <button type="button" class="retour-btn" id="back-btn-notifications" style="margin-top:1rem;">Retour</button>
+        </div>
+    </main>
+
     <nav>
         <button id="accueil-btn">Accueil</button>
         <button id="compte-btn">Compte</button>
         <button id="message-btn">Message<span class="badge hidden" id="message-badge">0</span></button>
+        <button id="notifications-btn">Boîte<span class="badge hidden" id="notifications-badge">0</span></button>
         <button id="tournois-btn">Tournois</button>
         <button id="liens-btn">Liens</button>
     </nav>
@@ -1130,12 +1177,14 @@
                     chargementOverlay.classList.add('hidden');
                     afficherTournoisAccueil();
                     demarrerSuiviBadgeMessages();
+                    demarrerSuiviBadgeNotifications();
                     traiterParticipationsTournoisTermines();
                 });
             } else {
                 window.currentUser = null;
                 welcome.textContent = 'Ma page';
                 arreterSuiviBadgeMessages();
+                arreterSuiviBadgeNotifications();
                 chargementOverlay.classList.add('hidden');
                 overlay.classList.remove('hidden');
                 signupModal.dataset.ouvertureTimestamp = Date.now();
@@ -1337,18 +1386,22 @@
         const accountPage = document.getElementById('account-page');
         const messagePage = document.getElementById('message-page');
         const liensPage = document.getElementById('liens-page');
+        const notificationsPage = document.getElementById('notifications-page');
         const accueilBtn = document.getElementById('accueil-btn');
         const compteBtn = document.getElementById('compte-btn');
         const messageBtn = document.getElementById('message-btn');
+        const notificationsBtn = document.getElementById('notifications-btn');
         const liensBtn = document.getElementById('liens-btn');
         const backBtnLiens = document.getElementById('back-btn-liens');
         const backBtn = document.getElementById('back-btn');
         const backBtnMessage = document.getElementById('back-btn-message');
+        const backBtnNotifications = document.getElementById('back-btn-notifications');
+        const notificationsList = document.getElementById('notifications-list');
 
         // Cache toutes les pages, puis affiche celle demandée
         function afficherPage(page) {
             quitterConversation();
-            [mainPage, accountPage, messagePage, liensPage, tournoisPage].forEach(function (p) {
+            [mainPage, accountPage, messagePage, liensPage, tournoisPage, notificationsPage].forEach(function (p) {
                 if (p) p.classList.add('hidden');
             });
             page.classList.remove('hidden');
@@ -1360,6 +1413,30 @@
 
         backBtnLiens.addEventListener('click', function () {
             afficherPage(mainPage);
+        });
+
+        notificationsBtn.addEventListener('click', function () {
+            if (!window.currentUser) {
+                alert("Connecte-toi d'abord (bouton Compte) pour consulter ta boîte de réception.");
+                return;
+            }
+            afficherPage(notificationsPage);
+            afficherNotifications();
+        });
+
+        backBtnNotifications.addEventListener('click', function () {
+            afficherPage(mainPage);
+        });
+
+        // Gère le clic sur "Supprimer" une notification (délégation d'événement)
+        notificationsList.addEventListener('click', function (e) {
+            const supprimerBtn = e.target.closest('.notif-supprimer');
+            if (supprimerBtn && window.currentUser) {
+                notificationsRef.child(window.currentUser.uid).child(supprimerBtn.dataset.id).remove()
+                    .catch(function (error) {
+                        console.error('Erreur suppression notification :', error);
+                    });
+            }
         });
 
         const accueilTournoisList = document.getElementById('accueil-tournois-list');
@@ -2165,6 +2242,7 @@
         const messagesRef = db.ref('messages'); // séparé de "tournois" pour pouvoir rendre les infos de tournoi publiques sans exposer les conversations
         const conversationsPriveesRef = db.ref('conversationsPrivees'); // conversationsPrivees/{monUid}/{autreUid} = { name, since, lastRead }
         const messagesPrivesRef = db.ref('messagesPrives'); // messagesPrives/{uidA}/{uidB}/{messageId}, uidA < uidB (ordre alphabétique)
+        const notificationsRef = db.ref('notifications'); // notifications/{uid}/{notifId} = { texte, type, timestamp, lu } : boîte de réception personnelle
 
         // --- Badge de notification pour les nouveaux messages privés ---
         const messageBadgeEl = document.getElementById('message-badge');
@@ -2247,6 +2325,142 @@
                     messagesListenersRefs.push({ ref: msgRef, callback: callback });
                 });
             });
+        }
+
+        // --- Boîte de réception (notifications) : inscription/désinscription confirmées,
+        // résultat/position dans un tournoi, message d'excuse en cas de manque de joueurs,
+        // et pour l'admin un récap des joueurs n'ayant pas pu participer ---
+        const notificationsBadgeEl = document.getElementById('notifications-badge');
+        let notificationsListenerRef = null;
+        let donneesNotifications = {}; // cache des notifications de l'utilisateur connecté, { id: {texte, type, timestamp, lu} }
+
+        function majBadgeNotifications(total) {
+            if (!notificationsBadgeEl) return;
+            if (total > 0) {
+                notificationsBadgeEl.textContent = total > 99 ? '99+' : String(total);
+                notificationsBadgeEl.classList.remove('hidden');
+            } else {
+                notificationsBadgeEl.classList.add('hidden');
+            }
+        }
+
+        function arreterSuiviBadgeNotifications() {
+            if (notificationsListenerRef) {
+                notificationsListenerRef.off('value');
+                notificationsListenerRef = null;
+            }
+            donneesNotifications = {};
+            majBadgeNotifications(0);
+        }
+
+        // Écoute en temps réel la boîte de réception de l'utilisateur connecté
+        function demarrerSuiviBadgeNotifications() {
+            arreterSuiviBadgeNotifications();
+            if (!window.currentUser) return;
+
+            notificationsListenerRef = notificationsRef.child(window.currentUser.uid);
+            notificationsListenerRef.on('value', function (snap) {
+                donneesNotifications = snap.val() || {};
+                const nonLues = Object.keys(donneesNotifications).filter(function (id) {
+                    return !donneesNotifications[id].lu;
+                }).length;
+                majBadgeNotifications(nonLues);
+
+                // Si la boîte de réception est actuellement affichée, on rafraîchit son contenu
+                if (notificationsPage && !notificationsPage.classList.contains('hidden')) {
+                    afficherNotifications(true);
+                }
+            });
+        }
+
+        // Envoie une notification dans la boîte de réception d'un utilisateur donné
+        function envoyerNotification(uid, texte, type) {
+            if (!uid || !texte) return Promise.resolve();
+            return notificationsRef.child(uid).push({
+                texte: texte,
+                type: type || 'info',
+                timestamp: Date.now(),
+                lu: false
+            }).catch(function (error) {
+                console.error('Erreur lors de l\'envoi de la notification :', error);
+            });
+        }
+
+        // Retrouve (et met en cache) l'uid du compte administrateur, pour pouvoir
+        // lui envoyer des notifications (ex : joueurs exclus par manque de joueurs)
+        let adminUidCache = null;
+        function obtenirUidAdmin() {
+            if (adminUidCache) return Promise.resolve(adminUidCache);
+            return comptesRef.orderByChild('email').equalTo(ADMIN_EMAIL).once('value')
+                .then(function (snap) {
+                    const data = snap.val() || {};
+                    const uids = Object.keys(data);
+                    adminUidCache = uids.length > 0 ? uids[0] : null;
+                    return adminUidCache;
+                })
+                .catch(function (error) {
+                    console.error('Erreur recherche du compte administrateur :', error);
+                    return null;
+                });
+        }
+
+        const ICONES_NOTIFICATION = {
+            inscription: '✅',
+            desinscription: '❌',
+            resultat: '🏆',
+            excuse: '😔',
+            'admin-exclusion': '⚠️',
+            info: '🔔'
+        };
+
+        // Formate un timestamp (ms) en date + heure lisible (ex : 9 juil. 2026, 14:37)
+        function formatDateHeureNotification(timestamp) {
+            if (!timestamp) return '';
+            return new Date(timestamp).toLocaleString('fr-FR', {
+                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function genererNotificationHTML(id, notif) {
+            const icone = ICONES_NOTIFICATION[notif.type] || ICONES_NOTIFICATION.info;
+            return '<div class="notification-card' + (notif.lu ? '' : ' non-lue') + '">' +
+                '<p class="notif-texte">' + icone + ' ' + echapperHTML(notif.texte || '') + '</p>' +
+                '<span class="notif-date">' + formatDateHeureNotification(notif.timestamp) + '</span>' +
+                '<button type="button" class="notif-supprimer" data-id="' + echapperHTML(id) + '">🗑️ Supprimer</button>' +
+                '</div>';
+        }
+
+        // Affiche la liste des notifications (la plus récente en premier) et marque
+        // les notifications non lues comme lues. rafraichissementSeul=true évite de
+        // relancer un marquage "lu" à chaque mise à jour temps réel déjà affichée.
+        function afficherNotifications(rafraichissementSeul) {
+            if (!window.currentUser) return;
+
+            const ids = Object.keys(donneesNotifications).sort(function (a, b) {
+                return (donneesNotifications[b].timestamp || 0) - (donneesNotifications[a].timestamp || 0);
+            });
+
+            if (ids.length === 0) {
+                notificationsList.innerHTML = '<p style="text-align:center;">Ta boîte de réception est vide pour le moment.</p>';
+            } else {
+                notificationsList.innerHTML = ids.map(function (id) {
+                    return genererNotificationHTML(id, donneesNotifications[id]);
+                }).join('');
+            }
+
+            if (!rafraichissementSeul) {
+                const misesAJour = {};
+                ids.forEach(function (id) {
+                    if (!donneesNotifications[id].lu) {
+                        misesAJour[id + '/lu'] = true;
+                    }
+                });
+                if (Object.keys(misesAJour).length > 0) {
+                    notificationsRef.child(window.currentUser.uid).update(misesAJour).catch(function (error) {
+                        console.error('Erreur marquage notifications lues :', error);
+                    });
+                }
+            }
         }
 
         const tournoisPage = document.getElementById('tournois-page');
@@ -2434,10 +2648,15 @@
                 return;
             }
 
+            let nomTournoiGlobal = '';
+            let inscritsGlobal = {};
+
             tournoisRef.child(tournoiId).once('value')
                 .then(function (snap) {
                     const t = snap.val() || {};
                     const inscrits = t.inscrits || {};
+                    inscritsGlobal = inscrits;
+                    nomTournoiGlobal = t.nom || 'ce tournoi';
                     const noms = Object.keys(inscrits).map(function (uid) { return inscrits[uid].name || 'Joueur'; });
                     const tailleEquipe = tailleEquipeDuTournoi(t.nom);
 
@@ -2476,11 +2695,54 @@
                     }
 
                     const texte = lignes.join('\n');
-                    return tournoisRef.child(tournoiId).update({ premierTour: texte });
+                    return tournoisRef.child(tournoiId).update({ premierTour: texte }).then(function () {
+                        return sansEquipe;
+                    });
                 })
-                .then(function (resultat) {
-                    if (resultat === null) return;
+                .then(function (sansEquipe) {
+                    if (sansEquipe === null || sansEquipe === undefined) return;
                     rafraichir();
+
+                    if (sansEquipe.length > 0) {
+                        // Retrouve l'uid de chaque joueur sans équipe complète (gère les doublons de nom)
+                        const uidsParNom = {};
+                        Object.keys(inscritsGlobal).forEach(function (uid) {
+                            const nom = inscritsGlobal[uid].name || 'Joueur';
+                            if (!uidsParNom[nom]) uidsParNom[nom] = [];
+                            uidsParNom[nom].push(uid);
+                        });
+
+                        const joueursExclus = [];
+                        sansEquipe.forEach(function (nom) {
+                            const uid = (uidsParNom[nom] || []).shift();
+                            if (uid) {
+                                joueursExclus.push(Object.assign({ uid: uid, name: nom }, inscritsGlobal[uid]));
+                            }
+                        });
+
+                        // Message d'excuse envoyé à chaque joueur n'ayant pas pu jouer par manque de joueurs
+                        joueursExclus.forEach(function (j) {
+                            envoyerNotification(
+                                j.uid,
+                                'On est désolé, tu n\'as pas pu participer au tournoi "' + nomTournoiGlobal + '" par manque de joueurs pour compléter une équipe. Toutes nos excuses pour la gêne occasionnée, à bientôt pour le prochain tournoi !',
+                                'excuse'
+                            );
+                        });
+
+                        // Récap envoyé à l'admin avec le nom et le profil (tag / identifiant) des joueurs concernés
+                        obtenirUidAdmin().then(function (uidAdmin) {
+                            if (!uidAdmin || joueursExclus.length === 0) return;
+                            const details = joueursExclus.map(function (j) {
+                                const profil = j.tag || j.identifiant || 'profil non renseigné';
+                                return j.name + ' (' + profil + ')';
+                            }).join(', ');
+                            envoyerNotification(
+                                uidAdmin,
+                                'Tirage au sort "' + nomTournoiGlobal + '" : joueur(s) n\'ayant pas pu participer par manque de joueurs pour une équipe complète : ' + details + '.',
+                                'admin-exclusion'
+                            );
+                        });
+                    }
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
@@ -2629,6 +2891,8 @@
                 .then(function (snap) {
                     const t = snap.val() || {};
                     const ancienUid = t.vainqueurUid || null;
+                    const nomTournoi = t.nom || 'ce tournoi';
+                    const inscrits = t.inscrits || {};
 
                     return tournoisRef.child(tournoiId).update({ vainqueur: nomVainqueur, vainqueurUid: vainqueurUid || null })
                         .then(function () {
@@ -2639,6 +2903,15 @@
                             if (vainqueurUid && vainqueurUid !== ancienUid) {
                                 operations.push(ajusterCompteur(vainqueurUid, 'victoires', 1));
                             }
+
+                            // Confirme à chaque inscrit le résultat / sa position dans le classement
+                            Object.keys(inscrits).forEach(function (uid) {
+                                const texte = (uid === vainqueurUid)
+                                    ? 'Félicitations, tu es le grand vainqueur du tournoi "' + nomTournoi + '" !'
+                                    : 'Le tournoi "' + nomTournoi + '" est terminé. Résultat : ' + nomVainqueur + ' remporte la victoire.';
+                                operations.push(envoyerNotification(uid, texte, 'resultat'));
+                            });
+
                             return Promise.all(operations);
                         });
                 })
@@ -2694,32 +2967,44 @@
             }
 
             const inscritRef = tournoisRef.child(tournoiId).child('inscrits').child(window.currentUser.uid);
+            const monUid = window.currentUser.uid;
 
             btn.disabled = true;
 
-            inscritRef.once('value')
-                .then(function (snapshot) {
-                    if (snapshot.exists()) {
-                        // Déjà inscrit : on désinscrit
-                        return inscritRef.remove();
-                    } else {
-                        // Pas encore inscrit : on vérifie la place puis on inscrit
-                        return tournoisRef.child(tournoiId).child('inscrits').once('value').then(function (inscritsSnap) {
-                            const inscrits = inscritsSnap.val() || {};
-                            return tournoisRef.child(tournoiId).child('participants').once('value').then(function (maxSnap) {
-                                const max = parseInt(maxSnap.val(), 10);
-                                if (Object.keys(inscrits).length >= max) {
-                                    alert('Ce tournoi est complet.');
-                                    return;
-                                }
-                                return inscritRef.set({
-                                    name: window.currentUser.name || window.currentUser.email || 'Joueur',
-                                    tag: window.currentUser.tag || '',
-                                    identifiant: window.currentUser.identifiant || ''
+            tournoisRef.child(tournoiId).once('value')
+                .then(function (tSnap) {
+                    const t = tSnap.val() || {};
+                    const nomTournoi = t.nom || 'ce tournoi';
+
+                    return inscritRef.once('value')
+                        .then(function (snapshot) {
+                            if (snapshot.exists()) {
+                                // Déjà inscrit : on désinscrit
+                                return inscritRef.remove().then(function () {
+                                    return envoyerNotification(monUid, 'Désinscription confirmée pour le tournoi "' + nomTournoi + '".', 'desinscription');
                                 });
-                            });
+                            } else {
+                                // Pas encore inscrit : on vérifie la place puis on inscrit
+                                return tournoisRef.child(tournoiId).child('inscrits').once('value').then(function (inscritsSnap) {
+                                    const inscrits = inscritsSnap.val() || {};
+                                    return tournoisRef.child(tournoiId).child('participants').once('value').then(function (maxSnap) {
+                                        const max = parseInt(maxSnap.val(), 10);
+                                        if (Object.keys(inscrits).length >= max) {
+                                            alert('Ce tournoi est complet.');
+                                            return;
+                                        }
+                                        return inscritRef.set({
+                                            name: window.currentUser.name || window.currentUser.email || 'Joueur',
+                                            tag: window.currentUser.tag || '',
+                                            identifiant: window.currentUser.identifiant || ''
+                                        }).then(function () {
+                                            const quandTexte = t.date ? ' (' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + ')' : '';
+                                            return envoyerNotification(monUid, 'Inscription confirmée pour le tournoi "' + nomTournoi + '"' + quandTexte + '.', 'inscription');
+                                        });
+                                    });
+                                });
+                            }
                         });
-                    }
                 })
                 .then(function () {
                     rafraichir();
