@@ -2386,23 +2386,6 @@
             });
         }
 
-        // Retrouve (et met en cache) l'uid du compte administrateur, pour pouvoir
-        // lui envoyer des notifications (ex : joueurs exclus par manque de joueurs)
-        let adminUidCache = null;
-        function obtenirUidAdmin() {
-            if (adminUidCache) return Promise.resolve(adminUidCache);
-            return comptesRef.orderByChild('email').equalTo(ADMIN_EMAIL).once('value')
-                .then(function (snap) {
-                    const data = snap.val() || {};
-                    const uids = Object.keys(data);
-                    adminUidCache = uids.length > 0 ? uids[0] : null;
-                    return adminUidCache;
-                })
-                .catch(function (error) {
-                    console.error('Erreur recherche du compte administrateur :', error);
-                    return null;
-                });
-        }
 
         const ICONES_NOTIFICATION = {
             inscription: '✅',
@@ -2729,19 +2712,19 @@
                             );
                         });
 
-                        // Récap envoyé à l'admin avec le nom et le profil (tag / identifiant) des joueurs concernés
-                        obtenirUidAdmin().then(function (uidAdmin) {
-                            if (!uidAdmin || joueursExclus.length === 0) return;
+                        // Récap envoyé à l'admin (déjà connecté ici, estAdmin() a été vérifié plus haut)
+                        // avec le nom et le profil (tag / identifiant) des joueurs concernés
+                        if (joueursExclus.length > 0 && window.currentUser) {
                             const details = joueursExclus.map(function (j) {
                                 const profil = j.tag || j.identifiant || 'profil non renseigné';
                                 return j.name + ' (' + profil + ')';
                             }).join(', ');
                             envoyerNotification(
-                                uidAdmin,
+                                window.currentUser.uid,
                                 'Tirage au sort "' + nomTournoiGlobal + '" : joueur(s) n\'ayant pas pu participer par manque de joueurs pour une équipe complète : ' + details + '.',
                                 'admin-exclusion'
                             );
-                        });
+                        }
                     }
                 })
                 .catch(function (error) {
