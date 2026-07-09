@@ -217,6 +217,33 @@
             opacity: 0.9;
         }
 
+        .tirage-btn {
+            margin-top: 0.6rem;
+            width: 100%;
+            padding: 0.55rem;
+            border: none;
+            border-radius: 999px;
+            background: #6a11cb;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tirage-btn:hover {
+            opacity: 0.9;
+        }
+
+        .tirage-resultat {
+            margin-top: 0.7rem;
+            background: #f5f3ff;
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.85rem;
+            color: #333;
+            line-height: 1.5;
+        }
+
         .msg-tabs {
             display: flex;
             gap: 0.5rem;
@@ -251,6 +278,15 @@
             border: none;
             border-radius: 8px;
             font-size: 0.95rem;
+        }
+
+        .nouvelle-conv-row select {
+            flex: 1;
+            padding: 0.6rem 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #333;
         }
 
         .nouvelle-conv-row button {
@@ -535,6 +571,133 @@
             color: #2e7d32;
         }
 
+        .stats-joueur {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin: 0.8rem 0 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        .stats-joueur .stat-badge {
+            background: #f0f2f8;
+            color: #333;
+            border-radius: 10px;
+            padding: 0.5rem 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .stats-joueur .stat-badge .stat-valeur {
+            display: block;
+            font-size: 1.2rem;
+            color: #2575fc;
+        }
+
+        .stats-joueur .stat-badge.stat-victoires .stat-valeur {
+            color: #b8860b;
+        }
+
+        .joueur-resultat-card .stats-mini {
+            font-size: 0.78rem;
+            color: #777;
+            margin-top: 0.15rem;
+        }
+
+        .bracket-titre {
+            margin-top: 1.8rem;
+        }
+
+        .bracket-card h3 {
+            margin-bottom: 0.6rem;
+        }
+
+        .bracket-etape {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .bracket-etape:last-of-type {
+            border-bottom: none;
+        }
+
+        .bracket-etape-label {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .bracket-etape-valeur {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .bracket-etape-valeur.vide {
+            color: #aaa;
+            font-weight: 700;
+        }
+
+        .bracket-vainqueur .bracket-etape-valeur {
+            color: #2e7d32;
+        }
+
+        .bracket-edit-toggle {
+            margin-top: 0.6rem;
+            width: 100%;
+            padding: 0.5rem;
+            border: none;
+            border-radius: 999px;
+            background: #eee;
+            color: #333;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bracket-edit-form {
+            margin-top: 0.6rem;
+        }
+
+        .bracket-edit-form label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            color: #555;
+        }
+
+        .bracket-edit-form input {
+            width: 100%;
+            padding: 0.5rem 0.7rem;
+            margin-bottom: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .bracket-save-btn {
+            width: 100%;
+            padding: 0.55rem;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bracket-save-btn:hover {
+            opacity: 0.9;
+        }
+
         .email-non-verifie-banniere {
             background: #fff3cd;
             color: #7a5c00;
@@ -679,6 +842,9 @@
 
             <h2>Tournois à venir</h2>
             <div id="accueil-tournois-list"></div>
+
+            <h2 class="bracket-titre">Bracket des tournois</h2>
+            <div id="accueil-bracket-list"></div>
         </div>
     </main>
 
@@ -694,6 +860,16 @@
             <p style="margin-bottom:0.6rem;"><strong>Nom :</strong> <span id="account-name"></span></p>
             <p style="margin-bottom:0.6rem;"><strong>Email :</strong> <span id="account-email"></span></p>
             <p style="margin-bottom:0.6rem;"><strong>Trophées :</strong> <span id="account-trophies"></span> 🏆</p>
+            <div class="stats-joueur">
+                <div class="stat-badge stat-tournois">
+                    <span class="stat-valeur" id="account-tournois-joues">0</span>
+                    Tournois joués
+                </div>
+                <div class="stat-badge stat-victoires">
+                    <span class="stat-valeur" id="account-victoires">0</span>
+                    Victoires 🏆
+                </div>
+            </div>
             <p style="margin-bottom:0.6rem;" id="account-tag"></p>
             <p style="margin-bottom:1.2rem;" id="account-identifiant"></p>
             <button type="button" id="parametres-btn" style="background:#555; margin-bottom:0.8rem;">⚙️ Modifier le profil</button>
@@ -954,6 +1130,7 @@
                     chargementOverlay.classList.add('hidden');
                     afficherTournoisAccueil();
                     demarrerSuiviBadgeMessages();
+                    traiterParticipationsTournoisTermines();
                 });
             } else {
                 window.currentUser = null;
@@ -1186,16 +1363,20 @@
         });
 
         const accueilTournoisList = document.getElementById('accueil-tournois-list');
+        const accueilBracketList = document.getElementById('accueil-bracket-list');
 
         function afficherTournoisAccueil() {
             accueilTournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+            accueilBracketList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
 
             tournoisRef.once('value')
                 .then(function (snapshot) {
                     const data = snapshot.val() || {};
                     const maintenant = new Date();
-                    const aVenir = Object.keys(data)
-                        .map(function (key) { return Object.assign({ id: key }, data[key]); })
+                    const tousLesTournois = Object.keys(data)
+                        .map(function (key) { return Object.assign({ id: key }, data[key]); });
+
+                    const aVenir = tousLesTournois
                         .filter(function (t) { return new Date(t.date + 'T' + (t.heure || '00:00')) >= maintenant; })
                         .sort(function (a, b) {
                             return new Date(a.date + 'T' + (a.heure || '00:00')) - new Date(b.date + 'T' + (b.heure || '00:00'));
@@ -1206,10 +1387,23 @@
                     } else {
                         accueilTournoisList.innerHTML = aVenir.map(function (t) { return genererCarteTournoiHTML(t, false); }).join('');
                     }
+
+                    // La carte bracket est affichée pour tous les tournois (à venir et terminés)
+                    // afin de suivre la progression 8èmes -> quarts -> demi -> finale -> vainqueur
+                    const tousTries = tousLesTournois.slice().sort(function (a, b) {
+                        return new Date(b.date + 'T' + (b.heure || '00:00')) - new Date(a.date + 'T' + (a.heure || '00:00'));
+                    });
+
+                    if (tousTries.length === 0) {
+                        accueilBracketList.innerHTML = '<p style="text-align:center;">Aucun tournoi pour le moment.</p>';
+                    } else {
+                        accueilBracketList.innerHTML = tousTries.map(function (t) { return genererCarteBracketHTML(t); }).join('');
+                    }
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
                     accueilTournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des tournois.</p>';
+                    accueilBracketList.innerHTML = '<p style="text-align:center;">Erreur de chargement des tournois.</p>';
                 });
         }
 
@@ -1279,6 +1473,7 @@
                     '<div class="infos">' +
                         '<h4><span class="avatar-emoji">' + echapperHTML(j.avatar || '🙂') + '</span>' + echapperHTML(j.name || 'Joueur') + '</h4>' +
                         (details ? '<p>' + details + '</p>' : '') +
+                        '<p class="stats-mini">🎮 ' + (j.tournoisJoues || 0) + ' tournois joués · 🏆 ' + (j.victoires || 0) + ' victoires</p>' +
                     '</div>' +
                     '<div class="joueur-actions">' +
                         '<button type="button" class="joueur-message-btn" data-uid="' + echapperHTML(j.uid) + '">Message</button>' +
@@ -1416,7 +1611,17 @@
                         (typeof j.trophies !== 'undefined' && j.trophies !== '') ? '🏆 ' + j.trophies + ' trophées' : null
                     ].filter(Boolean);
 
-                    profilDetailsEl.innerHTML = details.map(function (d) { return echapperHTML(d); }).join('<br>');
+                    profilDetailsEl.innerHTML = details.map(function (d) { return echapperHTML(d); }).join('<br>') +
+                        '<div class="stats-joueur">' +
+                            '<div class="stat-badge stat-tournois">' +
+                                '<span class="stat-valeur">' + (j.tournoisJoues || 0) + '</span>' +
+                                'Tournois joués' +
+                            '</div>' +
+                            '<div class="stat-badge stat-victoires">' +
+                                '<span class="stat-valeur">' + (j.victoires || 0) + '</span>' +
+                                'Victoires 🏆' +
+                            '</div>' +
+                        '</div>';
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
@@ -1792,6 +1997,8 @@
             document.getElementById('account-name').textContent = user.name || '';
             document.getElementById('account-email').textContent = user.email || '';
             document.getElementById('account-trophies').textContent = user.trophies || '';
+            document.getElementById('account-tournois-joues').textContent = user.tournoisJoues || 0;
+            document.getElementById('account-victoires').textContent = user.victoires || 0;
 
             const tagEl = document.getElementById('account-tag');
             tagEl.innerHTML = '<strong>Tag Supercell (#) :</strong> ' + (user.tag ? echapperHTML(user.tag) : 'Non renseigné');
@@ -1805,8 +2012,17 @@
 
         compteBtn.addEventListener('click', function () {
             if (window.currentUser) {
-                remplirInfosCompte(window.currentUser);
                 afficherPage(accountPage);
+                remplirInfosCompte(window.currentUser);
+                // On rafraîchit les stats (tournois joués / victoires) qui peuvent
+                // avoir changé en arrière-plan depuis la connexion.
+                comptesRef.child(window.currentUser.uid).once('value').then(function (snap) {
+                    const profil = snap.val() || {};
+                    window.currentUser = Object.assign({}, window.currentUser, profil);
+                    remplirInfosCompte(window.currentUser);
+                }).catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                });
                 return;
             }
 
@@ -2121,14 +2337,256 @@
                 '<p>👥 ' + nbInscrits + ' / ' + t.participants + ' participants</p>' +
                 '<button type="button" class="' + classeBouton + '" data-id="' + echapperHTML(t.id) + '"' +
                     (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
+                (afficherSupprimer && estAdmin()
+                    ? '<button type="button" class="tirage-btn" data-id="' + echapperHTML(t.id) + '">🎲 Tirer au sort le 1er tour</button>'
+                    : '') +
+                (t.premierTour
+                    ? '<div class="tirage-resultat"><strong>🎲 1er tour :</strong><br>' + echapperHTML(t.premierTour).replace(/\n/g, '<br>') + '</div>'
+                    : '') +
                 (afficherSupprimer && estAdmin() ? '<button type="button" class="supprimer-btn" data-id="' + echapperHTML(t.id) + '">🗑️ Supprimer</button>' : '') +
                 '</div>';
         }
 
+        // Nombre de joueurs par équipe selon le type de tournoi (même liste que
+        // pour les choix de nombre de participants). Sert à regrouper les inscrits
+        // individuels en équipes avant de faire le tirage au sort.
+        const TAILLE_EQUIPE_PAR_TYPE = {
+            'Tournois 1v1': 1,
+            'Tournois 2v2': 2,
+            'Tournois 3v3': 3,
+            'Tournois 3v3 mode aléatoire': 3
+        };
+
+        function tailleEquipeDuTournoi(nomTournoi) {
+            return TAILLE_EQUIPE_PAR_TYPE[nomTournoi] || 1;
+        }
+
+        // Mélange aléatoire générique (Fisher-Yates), utilisé à la fois pour former
+        // les équipes et pour tirer les matchs au sort.
+        function melangerAleatoirement(tableau) {
+            const melange = tableau.slice();
+            for (let i = melange.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const tmp = melange[i];
+                melange[i] = melange[j];
+                melange[j] = tmp;
+            }
+            return melange;
+        }
+
+        // Calcule un tirage au sort du 1er tour en single elimination, avec gestion
+        // automatique des "byes" (qualifications d'office) quand le nombre
+        // d'entrants (joueurs solo OU équipes) n'est pas une puissance de 2
+        // (ex : 3, 5, 6, 7, 15 entrants...).
+        // Principe : on prend la puissance de 2 immédiatement supérieure ou égale
+        // au nombre d'entrants comme taille de tableau. La différence entre cette
+        // taille et le nombre d'entrants donne le nombre de "byes" à distribuer :
+        // ces entrants passent directement au tour suivant sans jouer le 1er tour.
+        function genererTirageAvecByes(entrants) {
+            const n = entrants.length;
+            if (n < 2) return null;
+
+            const taille = Math.pow(2, Math.ceil(Math.log2(n)));
+            const nbByes = taille - n;
+
+            const melange = melangerAleatoirement(entrants);
+
+            const exemptes = melange.slice(0, nbByes);
+            const joueurs = melange.slice(nbByes);
+            const matchs = [];
+            for (let i = 0; i < joueurs.length; i += 2) {
+                matchs.push([joueurs[i], joueurs[i + 1]]);
+            }
+
+            return { taille, nbByes, exemptes, matchs };
+        }
+
+        // Regroupe une liste de joueurs individuels en équipes de taille donnée,
+        // en les mélangeant aléatoirement au préalable. Les joueurs en surnombre
+        // (qui ne forment pas une équipe complète) sont renvoyés à part.
+        function formerEquipesAleatoires(noms, tailleEquipe) {
+            if (tailleEquipe <= 1) {
+                return { equipes: noms.map(function (nom) { return [nom]; }), sansEquipe: [] };
+            }
+
+            const melange = melangerAleatoirement(noms);
+            const nbEquipesCompletes = Math.floor(melange.length / tailleEquipe);
+            const nbJoueursUtilises = nbEquipesCompletes * tailleEquipe;
+
+            const equipes = [];
+            for (let i = 0; i < nbJoueursUtilises; i += tailleEquipe) {
+                equipes.push(melange.slice(i, i + tailleEquipe));
+            }
+            const sansEquipe = melange.slice(nbJoueursUtilises);
+
+            return { equipes: equipes, sansEquipe: sansEquipe };
+        }
+
+        // Lance (ou relance) le tirage au sort du 1er tour d'un tournoi (admin uniquement),
+        // quel que soit le type de tournoi (1v1, 2v2, 3v3, 3v3 mode aléatoire...) :
+        // - pour un tournoi 1v1, chaque inscrit est un entrant.
+        // - pour un tournoi 2v2/3v3, les inscrits sont d'abord regroupés aléatoirement
+        //   en équipes complètes, et ce sont ces équipes qui deviennent les entrants.
+        // Le résultat lisible est enregistré dans le champ "premierTour" du tournoi.
+        function lancerTirageAuSort(tournoiId, rafraichir) {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut lancer le tirage au sort.");
+                return;
+            }
+
+            tournoisRef.child(tournoiId).once('value')
+                .then(function (snap) {
+                    const t = snap.val() || {};
+                    const inscrits = t.inscrits || {};
+                    const noms = Object.keys(inscrits).map(function (uid) { return inscrits[uid].name || 'Joueur'; });
+                    const tailleEquipe = tailleEquipeDuTournoi(t.nom);
+
+                    if (noms.length < 2) {
+                        alert('Il faut au moins 2 inscrits pour lancer un tirage au sort.');
+                        return null;
+                    }
+
+                    const { equipes, sansEquipe } = formerEquipesAleatoires(noms, tailleEquipe);
+                    const entrants = equipes.map(function (equipe) { return equipe.join(' + '); });
+
+                    if (entrants.length < 2) {
+                        alert(tailleEquipe > 1
+                            ? 'Il faut au moins 2 équipes complètes (' + tailleEquipe + ' joueurs chacune) pour lancer un tirage au sort.'
+                            : 'Il faut au moins 2 inscrits pour lancer un tirage au sort.');
+                        return null;
+                    }
+
+                    if (t.premierTour && !confirm('Un tirage a déjà été fait pour ce tournoi. Le relancer va le remplacer (nouveau mélange et, si besoin, de nouvelles équipes). Continuer ?')) {
+                        return null;
+                    }
+
+                    const tirage = genererTirageAvecByes(entrants);
+                    if (!tirage) return null;
+
+                    const lignes = [];
+                    tirage.matchs.forEach(function (match, index) {
+                        lignes.push('Match ' + (index + 1) + ' : ' + match[0] + ' vs ' + match[1]);
+                    });
+                    tirage.exemptes.forEach(function (nom) {
+                        lignes.push(nom + ' : qualifié(e) d\'office (bye)');
+                    });
+                    if (sansEquipe.length > 0) {
+                        lignes.push('');
+                        lignes.push('⚠️ Sans équipe complète, non inclus dans le tirage : ' + sansEquipe.join(', '));
+                    }
+
+                    const texte = lignes.join('\n');
+                    return tournoisRef.child(tournoiId).update({ premierTour: texte });
+                })
+                .then(function (resultat) {
+                    if (resultat === null) return;
+                    rafraichir();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert('Impossible de générer le tirage au sort : ' + error.message);
+                });
+        }
+
+        // Génère le HTML d'une carte "bracket" affichant la progression d'un tournoi :
+        // 8èmes de finale, quarts de finale, demi-finale, finale et vainqueur.
+        // Chaque étape affiche sa valeur si elle est renseignée, sinon un "?".
+        // L'admin peut ouvrir un petit formulaire pour renseigner/modifier ces étapes.
+        function genererCarteBracketHTML(t) {
+            const etapes = [
+                { cle: 'huitiemes', label: '8èmes de finale', emoji: '🎮' },
+                { cle: 'quarts', label: 'Quarts de finale', emoji: '🔥' },
+                { cle: 'demi', label: 'Demi-finale', emoji: '⚔️' },
+                { cle: 'finale', label: 'Finale', emoji: '🥈' }
+            ];
+
+            const lignesAffichage = etapes.map(function (etape) {
+                const valeur = t[etape.cle];
+                return '<div class="bracket-etape">' +
+                    '<span class="bracket-etape-label">' + etape.emoji + ' ' + etape.label + '</span>' +
+                    '<span class="bracket-etape-valeur' + (valeur ? '' : ' vide') + '">' + (valeur ? echapperHTML(valeur) : '?') + '</span>' +
+                    '</div>';
+            }).join('');
+
+            const ligneVainqueur = '<div class="bracket-etape bracket-vainqueur">' +
+                '<span class="bracket-etape-label">🏆 Vainqueur</span>' +
+                '<span class="bracket-etape-valeur' + (t.vainqueur ? '' : ' vide') + '">' + (t.vainqueur ? echapperHTML(t.vainqueur) : '?') + '</span>' +
+                '</div>';
+
+            const formulaireAdmin = estAdmin()
+                ? '<button type="button" class="bracket-edit-toggle" data-id="' + echapperHTML(t.id) + '">✏️ Renseigner les étapes</button>' +
+                  '<div class="bracket-edit-form hidden" data-id="' + echapperHTML(t.id) + '">' +
+                    etapes.map(function (etape) {
+                        return '<label>' + etape.label + '</label>' +
+                            '<input type="text" class="bracket-input" data-id="' + echapperHTML(t.id) + '" data-etape="' + etape.cle + '" placeholder="Ex : Nom du qualifié" value="' + echapperHTML(t[etape.cle] || '') + '">';
+                    }).join('') +
+                    '<button type="button" class="bracket-save-btn" data-id="' + echapperHTML(t.id) + '">Enregistrer</button>' +
+                  '</div>'
+                : '';
+
+            return '<div class="tournoi-card bracket-card">' +
+                '<h3>' + echapperHTML(t.nom) + '</h3>' +
+                lignesAffichage +
+                ligneVainqueur +
+                formulaireAdmin +
+                '</div>';
+        }
+
+        // Enregistre les étapes du bracket (8èmes, quarts, demi, finale) d'un tournoi (admin uniquement)
+        function definirEtapesBracket(tournoiId, etapes, rafraichir) {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut renseigner le bracket.");
+                return;
+            }
+
+            tournoisRef.child(tournoiId).update(etapes)
+                .then(function () {
+                    rafraichir();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible d'enregistrer le bracket : " + error.message);
+                });
+        }
+
+        // Gère l'ouverture du formulaire d'édition et l'enregistrement du bracket
+        // depuis la page d'accueil (délégation d'événement)
+        accueilBracketList.addEventListener('click', function (e) {
+            const toggleBtn = e.target.closest('.bracket-edit-toggle');
+            if (toggleBtn) {
+                const form = accueilBracketList.querySelector('.bracket-edit-form[data-id="' + toggleBtn.dataset.id + '"]');
+                if (form) form.classList.toggle('hidden');
+                return;
+            }
+
+            const saveBtn = e.target.closest('.bracket-save-btn');
+            if (saveBtn) {
+                const inputs = accueilBracketList.querySelectorAll('.bracket-input[data-id="' + saveBtn.dataset.id + '"]');
+                const etapes = {};
+                inputs.forEach(function (input) {
+                    etapes[input.dataset.etape] = input.value.trim();
+                });
+                definirEtapesBracket(saveBtn.dataset.id, etapes, afficherTournoisAccueil);
+            }
+        });
+
         // Génère le HTML d'une carte de tournoi terminé, avec le résultat (vainqueur)
-        // et, pour l'admin, un champ pour le renseigner
+        // et, pour l'admin, un menu pour choisir le vainqueur parmi les inscrits
         function genererCarteTournoiTermineHTML(t) {
             const vainqueur = t.vainqueur || '';
+            const inscrits = t.inscrits || {};
+            const uidsInscrits = Object.keys(inscrits);
+
+            const optionsInscrits = uidsInscrits.map(function (uid) {
+                const nom = inscrits[uid].name || 'Joueur';
+                const selectionne = t.vainqueurUid === uid ? ' selected' : '';
+                return '<option value="' + echapperHTML(uid) + '"' + selectionne + '>' + echapperHTML(nom) + '</option>';
+            }).join('');
+
+            const zoneSaisie = uidsInscrits.length > 0
+                ? '<select class="vainqueur-select" data-id="' + echapperHTML(t.id) + '"><option value="">-- Choisir le vainqueur --</option>' + optionsInscrits + '</select>'
+                : '<input type="text" class="vainqueur-input" data-id="' + echapperHTML(t.id) + '" placeholder="Nom du vainqueur" value="' + echapperHTML(vainqueur) + '">';
+
             return '<div class="tournoi-card termine">' +
                 '<h3>' + echapperHTML(t.nom) + '</h3>' +
                 '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + echapperHTML(t.heure) : '') + '</p>' +
@@ -2137,7 +2595,7 @@
                     : '<p style="color:#888;">Résultat pas encore renseigné</p>') +
                 (estAdmin()
                     ? '<div class="nouvelle-conv-row" style="margin-top:0.6rem;">' +
-                        '<input type="text" class="vainqueur-input" data-id="' + echapperHTML(t.id) + '" placeholder="Nom du vainqueur" value="' + echapperHTML(vainqueur) + '">' +
+                        zoneSaisie +
                         '<button type="button" class="vainqueur-btn" data-id="' + echapperHTML(t.id) + '">Valider</button>' +
                       '</div>' +
                       '<button type="button" class="supprimer-btn" data-id="' + echapperHTML(t.id) + '">🗑️ Supprimer</button>'
@@ -2145,14 +2603,45 @@
                 '</div>';
         }
 
-        // Enregistre le vainqueur d'un tournoi terminé (admin uniquement)
-        function definirVainqueurTournoi(tournoiId, nomVainqueur, rafraichir) {
+        // Ajuste (incrémente/décrémente) de façon atomique un compteur de stats
+        // d'un joueur, à la fois dans son profil privé (comptes) et dans
+        // l'annuaire public (joueurs), pour que ce soit visible par tout le monde.
+        function ajusterCompteur(uid, champ, delta) {
+            if (!uid) return Promise.resolve();
+            return Promise.all([comptesRef.child(uid).child(champ), joueursRef.child(uid).child(champ)].map(function (ref) {
+                return ref.transaction(function (valeurActuelle) {
+                    return (valeurActuelle || 0) + delta;
+                });
+            }));
+        }
+
+        // Enregistre le vainqueur d'un tournoi terminé (admin uniquement) et met
+        // à jour automatiquement le compteur de victoires du joueur concerné
+        // (en gérant aussi le cas d'une correction : on retire la victoire à
+        // l'ancien vainqueur si l'admin change le résultat).
+        function definirVainqueurTournoi(tournoiId, vainqueurUid, nomVainqueur, rafraichir) {
             if (!estAdmin()) {
                 alert("Seul l'administrateur peut renseigner le résultat d'un tournoi.");
                 return;
             }
 
-            tournoisRef.child(tournoiId).child('vainqueur').set(nomVainqueur)
+            tournoisRef.child(tournoiId).once('value')
+                .then(function (snap) {
+                    const t = snap.val() || {};
+                    const ancienUid = t.vainqueurUid || null;
+
+                    return tournoisRef.child(tournoiId).update({ vainqueur: nomVainqueur, vainqueurUid: vainqueurUid || null })
+                        .then(function () {
+                            const operations = [];
+                            if (ancienUid && ancienUid !== vainqueurUid) {
+                                operations.push(ajusterCompteur(ancienUid, 'victoires', -1));
+                            }
+                            if (vainqueurUid && vainqueurUid !== ancienUid) {
+                                operations.push(ajusterCompteur(vainqueurUid, 'victoires', 1));
+                            }
+                            return Promise.all(operations);
+                        });
+                })
                 .then(function () {
                     rafraichir();
                 })
@@ -2160,6 +2649,41 @@
                     console.error('Erreur Firebase :', error);
                     alert("Impossible d'enregistrer le vainqueur : " + error.message);
                 });
+        }
+
+        // Parcourt les tournois dont la date/heure de début est passée et qui
+        // n'ont pas encore été "traités" : pour chacun, crédite +1 "tournoi joué"
+        // à tous les inscrits à ce moment-là (donc pas ceux qui se sont désinscrits
+        // avant le début). Une transaction sur le drapeau "statsAppliquees" évite
+        // qu'un même tournoi soit compté deux fois si plusieurs utilisateurs
+        // ouvrent l'app en même temps.
+        function traiterParticipationsTournoisTermines() {
+            tournoisRef.once('value').then(function (snapshot) {
+                const data = snapshot.val() || {};
+                const maintenant = new Date();
+
+                Object.keys(data).forEach(function (id) {
+                    const t = data[id];
+                    const dateDebut = new Date(t.date + 'T' + (t.heure || '00:00'));
+                    if (dateDebut > maintenant || t.statsAppliquees) return;
+
+                    tournoisRef.child(id).child('statsAppliquees').transaction(function (valeurActuelle) {
+                        if (valeurActuelle) return; // déjà traité par un autre client : on abandonne
+                        return true;
+                    }).then(function (resultat) {
+                        if (!resultat.committed || !resultat.snapshot.val()) return;
+
+                        const inscrits = t.inscrits || {};
+                        Object.keys(inscrits).forEach(function (uid) {
+                            ajusterCompteur(uid, 'tournoisJoues', 1);
+                        });
+                    }).catch(function (error) {
+                        console.error('Erreur traitement participations :', error);
+                    });
+                });
+            }).catch(function (error) {
+                console.error('Erreur Firebase :', error);
+            });
         }
 
         // Gère l'inscription/désinscription à un tournoi (réutilisé sur les deux pages)
@@ -2209,6 +2733,7 @@
 
         function afficherTournois() {
             afficherPage(tournoisPage);
+            traiterParticipationsTournoisTermines();
 
             // Le bouton "+ Ajouter un tournoi" n'apparaît que pour l'admin
             if (estAdmin()) {
@@ -2296,6 +2821,11 @@
                 gererInscription(inscritBtn.dataset.id, inscritBtn, afficherTournois);
                 return;
             }
+            const tirageBtn = e.target.closest('.tirage-btn');
+            if (tirageBtn) {
+                lancerTirageAuSort(tirageBtn.dataset.id, afficherTournois);
+                return;
+            }
             const supprimerBtn = e.target.closest('.supprimer-btn');
             if (supprimerBtn) {
                 supprimerTournoi(supprimerBtn.dataset.id, afficherTournois);
@@ -2306,13 +2836,23 @@
         tournoisTerminesList.addEventListener('click', function (e) {
             const vainqueurBtn = e.target.closest('.vainqueur-btn');
             if (vainqueurBtn) {
+                const select = tournoisTerminesList.querySelector('.vainqueur-select[data-id="' + vainqueurBtn.dataset.id + '"]');
                 const input = tournoisTerminesList.querySelector('.vainqueur-input[data-id="' + vainqueurBtn.dataset.id + '"]');
-                const nomVainqueur = input ? input.value.trim() : '';
+
+                let vainqueurUid = null;
+                let nomVainqueur = '';
+                if (select) {
+                    vainqueurUid = select.value || null;
+                    nomVainqueur = vainqueurUid ? select.options[select.selectedIndex].textContent : '';
+                } else if (input) {
+                    nomVainqueur = input.value.trim();
+                }
+
                 if (!nomVainqueur) {
-                    alert('Merci de renseigner le nom du vainqueur.');
+                    alert('Merci de choisir ou de renseigner le vainqueur.');
                     return;
                 }
-                definirVainqueurTournoi(vainqueurBtn.dataset.id, nomVainqueur, afficherTournois);
+                definirVainqueurTournoi(vainqueurBtn.dataset.id, vainqueurUid, nomVainqueur, afficherTournois);
                 return;
             }
 
