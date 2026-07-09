@@ -1023,7 +1023,7 @@
             const maintenant = firebase.database.ServerValue.TIMESTAMP;
             const maj = {};
             maj['amis/' + window.currentUser.uid + '/' + autreUid] = { name: joueur.name || 'Joueur', since: maintenant };
-            maj['amis/' + autreUid + '/' + window.currentUser.uid] = { name: window.currentUser.name, since: maintenant };
+            maj['amis/' + autreUid + '/' + window.currentUser.uid] = { name: window.currentUser.name || window.currentUser.email || 'Joueur', since: maintenant };
 
             db.ref().update(maj)
                 .then(function () {
@@ -1276,7 +1276,7 @@
                     // car on est l'un des deux participants dans les deux cas)
                     const maj = {};
                     maj['conversationsPrivees/' + window.currentUser.uid + '/' + autre.uid] = { name: autre.name, since: maintenant };
-                    maj['conversationsPrivees/' + autre.uid + '/' + window.currentUser.uid] = { name: window.currentUser.name, since: maintenant };
+                    maj['conversationsPrivees/' + autre.uid + '/' + window.currentUser.uid] = { name: window.currentUser.name || window.currentUser.email || 'Joueur', since: maintenant };
 
                     return db.ref().update(maj).then(function () {
                         priveRechercheInput.value = '';
@@ -1407,7 +1407,7 @@
             chatSendBtn.disabled = true;
 
             conversationOuverteRef.push({
-                auteur: window.currentUser.name,
+                auteur: window.currentUser.name || window.currentUser.email || 'Joueur',
                 uid: window.currentUser.uid,
                 texte: texte,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
@@ -1581,7 +1581,7 @@
                                     return;
                                 }
                                 return inscritRef.set({
-                                    name: window.currentUser.name,
+                                    name: window.currentUser.name || window.currentUser.email || 'Joueur',
                                     tag: window.currentUser.tag || '',
                                     identifiant: window.currentUser.identifiant || ''
                                 });
