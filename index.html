@@ -484,6 +484,29 @@
         </div>
     </div>
 
+    <div class="overlay hidden" id="parametres-overlay">
+        <div class="modal" id="parametres-modal">
+            <h2>Modifier mon profil</h2>
+            <form id="parametres-form">
+                <label for="parametres-name">Nom</label>
+                <input type="text" id="parametres-name" required placeholder="Votre nom">
+
+                <label for="parametres-trophies">Trophées totaux</label>
+                <input type="number" id="parametres-trophies" required placeholder="0" min="0">
+
+                <label for="parametres-tag">Tag Supercell (ex: #2Y8V0PGL)</label>
+                <input type="text" id="parametres-tag" placeholder="#2Y8V0PGL">
+
+                <label for="parametres-identifiant">OU Identifiant Supercell</label>
+                <input type="text" id="parametres-identifiant" placeholder="Ton identifiant Supercell">
+
+                <button type="button" id="parametres-save-btn">Enregistrer</button>
+            </form>
+            <p id="parametres-erreur" style="color:#c0392b; text-align:center; margin-top:0.6rem; font-size:0.85rem;"></p>
+            <button type="button" id="parametres-annuler-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:#eee; color:#333; font-weight:600; cursor:pointer; margin-top:0.6rem;">Annuler</button>
+        </div>
+    </div>
+
     <main id="main-page">
         <div class="tournois-container">
             <h1 id="welcome" style="text-align:center; margin-bottom:1.5rem;">Ma page</h1>
@@ -510,6 +533,7 @@
             <p style="margin-bottom:0.6rem;"><strong>Trophées :</strong> <span id="account-trophies"></span> 🏆</p>
             <p style="margin-bottom:0.6rem;" id="account-tag"></p>
             <p style="margin-bottom:1.2rem;" id="account-identifiant"></p>
+            <button type="button" id="parametres-btn" style="background:#555; margin-bottom:0.8rem;">⚙️ Modifier le profil</button>
             <button type="button" id="logout-btn" style="background:#c0392b; margin-bottom:0.8rem;">Se déconnecter</button>
             <button type="button" id="back-btn">Retour</button>
         </div>
@@ -1446,15 +1470,15 @@
         });
 
         function remplirInfosCompte(user) {
-            document.getElementById('account-name').textContent = user.name;
-            document.getElementById('account-email').textContent = user.email;
-            document.getElementById('account-trophies').textContent = user.trophies;
+            document.getElementById('account-name').textContent = user.name || '';
+            document.getElementById('account-email').textContent = user.email || '';
+            document.getElementById('account-trophies').textContent = user.trophies || '';
 
             const tagEl = document.getElementById('account-tag');
-            tagEl.innerHTML = '<strong>Tag Supercell (#) :</strong> ' + (user.tag || 'Non renseigné');
+            tagEl.innerHTML = '<strong>Tag Supercell (#) :</strong> ' + (user.tag ? echapperHTML(user.tag) : 'Non renseigné');
 
             const identifiantEl = document.getElementById('account-identifiant');
-            identifiantEl.innerHTML = '<strong>Identifiant Supercell :</strong> ' + (user.identifiant || 'Non renseigné');
+            identifiantEl.innerHTML = '<strong>Identifiant Supercell :</strong> ' + (user.identifiant ? echapperHTML(user.identifiant) : 'Non renseigné');
         }
 
         compteBtn.addEventListener('click', function () {
@@ -1467,6 +1491,100 @@
             // Plus de prompt() ni de simple lookup par email : on demande une
             // vraie connexion (email + mot de passe) via Firebase Auth.
             afficherModaleConnexion();
+        });
+
+        // --- Modification du profil (nom, trophées, tag/identifiant) ---
+        const parametresBtn = document.getElementById('parametres-btn');
+        const parametresOverlay = document.getElementById('parametres-overlay');
+        const parametresNameInput = document.getElementById('parametres-name');
+        const parametresTrophiesInput = document.getElementById('parametres-trophies');
+        const parametresTagInput = document.getElementById('parametres-tag');
+        const parametresIdentifiantInput = document.getElementById('parametres-identifiant');
+        const parametresSaveBtn = document.getElementById('parametres-save-btn');
+        const parametresAnnulerBtn = document.getElementById('parametres-annuler-btn');
+        const parametresErreur = document.getElementById('parametres-erreur');
+
+        parametresBtn.addEventListener('click', function () {
+            if (!window.currentUser) return;
+
+            parametresErreur.textContent = '';
+            parametresNameInput.value = window.currentUser.name || '';
+            parametresTrophiesInput.value = window.currentUser.trophies || '';
+            parametresTagInput.value = window.currentUser.tag || '';
+            parametresIdentifiantInput.value = window.currentUser.identifiant || '';
+            parametresOverlay.classList.remove('hidden');
+        });
+
+        parametresAnnulerBtn.addEventListener('click', function () {
+            parametresOverlay.classList.add('hidden');
+        });
+
+        parametresSaveBtn.addEventListener('click', function () {
+            if (!window.currentUser) return;
+
+            const name = parametresNameInput.value.trim();
+            const trophies = parametresTrophiesInput.value.trim();
+            const tag = parametresTagInput.value.trim();
+            const identifiant = parametresIdentifiantInput.value.trim();
+
+            if (!name || !trophies) {
+                parametresErreur.textContent = 'Merci de remplir au moins le nom et les trophées.';
+                return;
+            }
+
+            if (!tag && !identifiant) {
+                parametresErreur.textContent = 'Renseigne ton Tag Supercell OU ton Identifiant Supercell (au moins un des deux).';
+                return;
+            }
+
+            parametresErreur.textContent = '';
+            parametresSaveBtn.disabled = true;
+            parametresSaveBtn.textContent = 'Enregistrement...';
+
+            const uid = window.currentUser.uid;
+            const ancienTag = window.currentUser.tag || '';
+            const ancienIdentifiant = window.currentUser.identifiant || '';
+
+            comptesRef.child(uid).update({
+                name: name,
+                trophies: trophies,
+                tag: tag,
+                identifiant: identifiant
+            })
+                .then(function () {
+                    const operations = [];
+
+                    // Nettoie les anciennes entrées d'index si le tag/identifiant a changé
+                    if (ancienTag && ancienTag !== tag) {
+                        operations.push(pseudosRef.child(cleanPseudoKey(ancienTag)).remove());
+                    }
+                    if (ancienIdentifiant && ancienIdentifiant !== identifiant) {
+                        operations.push(pseudosRef.child(cleanPseudoKey(ancienIdentifiant)).remove());
+                    }
+                    if (tag) {
+                        operations.push(pseudosRef.child(cleanPseudoKey(tag)).set({ uid: uid, name: name }));
+                    }
+                    if (identifiant) {
+                        operations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
+                    }
+                    // Met à jour l'annuaire public utilisé par la recherche et les profils
+                    operations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies }));
+
+                    return Promise.all(operations);
+                })
+                .then(function () {
+                    window.currentUser = Object.assign({}, window.currentUser, { name, trophies, tag, identifiant });
+                    remplirInfosCompte(window.currentUser);
+                    parametresOverlay.classList.add('hidden');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    parametresErreur.textContent = "Erreur lors de l'enregistrement : " + error.message;
+                })
+                .finally(function () {
+                    parametresSaveBtn.disabled = false;
+                    parametresSaveBtn.textContent = 'Enregistrer';
+                });
         });
 
         const logoutBtn = document.getElementById('logout-btn');
