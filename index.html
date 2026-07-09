@@ -2853,11 +2853,19 @@
         // l'annuaire public (joueurs), pour que ce soit visible par tout le monde.
         function ajusterCompteur(uid, champ, delta) {
             if (!uid) return Promise.resolve();
-            return Promise.all([comptesRef.child(uid).child(champ), joueursRef.child(uid).child(champ)].map(function (ref) {
-                return ref.transaction(function (valeurActuelle) {
-                    return (valeurActuelle || 0) + delta;
-                });
-            }));
+            // On utilise l'incrémentation atomique côté serveur de Firebase
+            // (ServerValue.increment) plutôt qu'une transaction côté client.
+            // Une transaction() a besoin à la fois du droit de LIRE et du
+            // droit d'ÉCRIRE la valeur actuelle ; or nos règles de sécurité
+            // n'autorisent la lecture de comptes/{uid} qu'à son propriétaire,
+            // ce qui fait échouer la transaction avec permission_denied
+            // quand c'est l'admin qui crédite le compteur d'un AUTRE joueur.
+            // set()/update() avec ServerValue.increment ne nécessite que le
+            // droit d'écriture, qu'on a bien pour ces deux champs.
+            return Promise.all([
+                comptesRef.child(uid).child(champ).set(firebase.database.ServerValue.increment(delta)),
+                joueursRef.child(uid).child(champ).set(firebase.database.ServerValue.increment(delta))
+            ]);
         }
 
         // Enregistre le vainqueur d'un tournoi terminé (admin uniquement) et met
