@@ -2868,6 +2868,15 @@
             ]);
         }
 
+        // Attache une étiquette à une erreur pour savoir, dans l'alerte finale,
+        // exactement QUELLE écriture a échoué (sans avoir besoin de la console).
+        function etiqueterErreur(promise, etiquette) {
+            return promise.catch(function (error) {
+                if (!error.etape) error.etape = etiquette;
+                throw error;
+            });
+        }
+
         // Enregistre le vainqueur d'un tournoi terminé (admin uniquement) et met
         // à jour automatiquement le compteur de victoires du joueur concerné
         // (en gérant aussi le cas d'une correction : on retire la victoire à
@@ -2885,14 +2894,23 @@
                     const nomTournoi = t.nom || 'ce tournoi';
                     const inscrits = t.inscrits || {};
 
-                    return tournoisRef.child(tournoiId).update({ vainqueur: nomVainqueur, vainqueurUid: vainqueurUid || null })
+                    return etiqueterErreur(
+                        tournoisRef.child(tournoiId).update({ vainqueur: nomVainqueur, vainqueurUid: vainqueurUid || null }),
+                        "écriture du résultat sur le tournoi (tournois/" + tournoiId + ")"
+                    )
                         .then(function () {
                             const operations = [];
                             if (ancienUid && ancienUid !== vainqueurUid) {
-                                operations.push(ajusterCompteur(ancienUid, 'victoires', -1));
+                                operations.push(etiqueterErreur(
+                                    ajusterCompteur(ancienUid, 'victoires', -1),
+                                    "retrait de la victoire à l'ancien vainqueur (uid: " + ancienUid + ")"
+                                ));
                             }
                             if (vainqueurUid && vainqueurUid !== ancienUid) {
-                                operations.push(ajusterCompteur(vainqueurUid, 'victoires', 1));
+                                operations.push(etiqueterErreur(
+                                    ajusterCompteur(vainqueurUid, 'victoires', 1),
+                                    "ajout de la victoire au nouveau vainqueur (uid: " + vainqueurUid + ")"
+                                ));
                             }
 
                             // Confirme à chaque inscrit le résultat / sa position dans le classement
@@ -2911,7 +2929,9 @@
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
-                    alert("Impossible d'enregistrer le vainqueur : " + error.message);
+                    const etape = error.etape ? ' [étape : ' + error.etape + ']' : '';
+                    const code = error.code ? ' (code : ' + error.code + ')' : '';
+                    alert("Impossible d'enregistrer le vainqueur" + etape + code + " : " + error.message);
                 });
         }
 
