@@ -648,6 +648,80 @@
             margin-top: 1.8rem;
         }
 
+        .classement-panel {
+            margin-top: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: white;
+            color: #333;
+            border-radius: 14px;
+            padding: 1.2rem 1.2rem 1rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+        }
+
+        .classement-panel h2 {
+            text-align: center;
+            margin-bottom: 0.9rem;
+            color: #2575fc;
+        }
+
+        .classement-ligne {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.55rem 0.3rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .classement-ligne:last-child {
+            border-bottom: none;
+        }
+
+        .classement-rang {
+            width: 2rem;
+            flex-shrink: 0;
+            font-weight: 700;
+            text-align: center;
+            color: #555;
+        }
+
+        .classement-avatar {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .classement-nom {
+            flex: 1;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .classement-victoires {
+            flex-shrink: 0;
+            font-weight: 700;
+            color: #b8860b;
+            font-size: 0.9rem;
+        }
+
+        .classement-voir-plus-btn {
+            display: block;
+            width: 100%;
+            margin-top: 0.8rem;
+            padding: 0.55rem;
+            border: none;
+            border-radius: 999px;
+            background: #f0f2f8;
+            color: #2575fc;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .classement-voir-plus-btn:hover {
+            background: #e4e8f5;
+        }
+
         .bracket-card h3 {
             margin-bottom: 0.6rem;
         }
@@ -883,8 +957,15 @@
 
             <h2 class="bracket-titre">Bracket des tournois</h2>
             <div id="accueil-bracket-list"></div>
+
+            <div class="classement-panel">
+                <h2>🏆 Classement des joueurs</h2>
+                <div id="classement-list"></div>
+                <button type="button" id="classement-voir-plus" class="classement-voir-plus-btn hidden">Voir les 5 suivants ▼</button>
+            </div>
         </div>
     </main>
+
 
     <main id="account-page" class="hidden">
         <div class="modal" style="text-align:center;">
@@ -1442,9 +1523,82 @@
         const accueilTournoisList = document.getElementById('accueil-tournois-list');
         const accueilBracketList = document.getElementById('accueil-bracket-list');
 
+        // --- Classement des joueurs (Accueil) : trié par nombre de victoires de tournois ---
+        const classementList = document.getElementById('classement-list');
+        const classementVoirPlusBtn = document.getElementById('classement-voir-plus');
+        const CLASSEMENT_PAR_PAGE = 5;
+        let classementJoueursTries = [];
+        let classementNombreAffiches = CLASSEMENT_PAR_PAGE;
+
+        // Réaffiche la liste du classement selon le nombre de joueurs actuellement "déroulés"
+        function rendreClassement() {
+            if (classementJoueursTries.length === 0) {
+                classementList.innerHTML = '<p style="text-align:center;">Aucune victoire enregistrée pour le moment.</p>';
+                classementVoirPlusBtn.classList.add('hidden');
+                return;
+            }
+
+            const joueursAffiches = classementJoueursTries.slice(0, classementNombreAffiches);
+
+            classementList.innerHTML = joueursAffiches.map(function (j, index) {
+                const rang = index + 1;
+                const medaille = rang === 1 ? '🥇' : rang === 2 ? '🥈' : rang === 3 ? '🥉' : ('#' + rang);
+                return '<div class="classement-ligne">' +
+                    '<span class="classement-rang">' + medaille + '</span>' +
+                    '<span class="classement-avatar">' + echapperHTML(j.avatar || '🙂') + '</span>' +
+                    '<span class="classement-nom">' + echapperHTML(j.name || 'Joueur') + '</span>' +
+                    '<span class="classement-victoires">🏆 ' + (j.victoires || 0) + '</span>' +
+                '</div>';
+            }).join('');
+
+            const ilEnResteAAfficher = classementNombreAffiches < classementJoueursTries.length;
+            const onPeutReduire = !ilEnResteAAfficher && classementJoueursTries.length > CLASSEMENT_PAR_PAGE;
+
+            if (ilEnResteAAfficher) {
+                classementVoirPlusBtn.textContent = 'Voir les 5 suivants ▼';
+                classementVoirPlusBtn.classList.remove('hidden');
+            } else if (onPeutReduire) {
+                classementVoirPlusBtn.textContent = 'Réduire ▲';
+                classementVoirPlusBtn.classList.remove('hidden');
+            } else {
+                classementVoirPlusBtn.classList.add('hidden');
+            }
+        }
+
+        // Charge l'annuaire des joueurs et construit le classement trié par victoires décroissantes
+        function afficherClassement() {
+            classementList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+            classementNombreAffiches = CLASSEMENT_PAR_PAGE;
+
+            joueursRef.once('value')
+                .then(function (snapshot) {
+                    const data = snapshot.val() || {};
+                    classementJoueursTries = Object.keys(data)
+                        .map(function (key) { return Object.assign({ uid: key }, data[key]); })
+                        .filter(function (j) { return (j.victoires || 0) > 0; })
+                        .sort(function (a, b) { return (b.victoires || 0) - (a.victoires || 0); });
+
+                    rendreClassement();
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    classementList.innerHTML = '<p style="text-align:center;">Erreur de chargement du classement.</p>';
+                });
+        }
+
+        classementVoirPlusBtn.addEventListener('click', function () {
+            if (classementNombreAffiches < classementJoueursTries.length) {
+                classementNombreAffiches += CLASSEMENT_PAR_PAGE;
+            } else {
+                classementNombreAffiches = CLASSEMENT_PAR_PAGE;
+            }
+            rendreClassement();
+        });
+
         function afficherTournoisAccueil() {
             accueilTournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
             accueilBracketList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+            afficherClassement();
 
             tournoisRef.once('value')
                 .then(function (snapshot) {
