@@ -638,10 +638,34 @@
             color: #b8860b;
         }
 
+        .stats-joueur .stat-badge.stat-taux .stat-valeur {
+            color: #2e7d32;
+        }
+
         .joueur-resultat-card .stats-mini {
             font-size: 0.78rem;
             color: #777;
             margin-top: 0.15rem;
+        }
+
+        .joueur-badge {
+            display: inline-block;
+            margin-top: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f7d774 0%, #b8860b 100%);
+            color: #4a3800;
+            box-shadow: 0 2px 6px rgba(184, 134, 11, 0.4);
+        }
+
+        .classement-nom .joueur-badge,
+        .podium-nom .joueur-badge {
+            display: block;
+            margin-top: 0.2rem;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
         }
 
         .bracket-titre {
@@ -720,6 +744,101 @@
 
         .classement-voir-plus-btn:hover {
             background: #e4e8f5;
+        }
+
+        .classement-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.1rem;
+        }
+
+        .classement-tab {
+            flex: 1;
+            padding: 0.55rem 0.4rem;
+            border: none;
+            border-radius: 999px;
+            background: #f0f2f8;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+        }
+
+        .classement-tab:hover {
+            background: #e4e8f5;
+        }
+
+        .classement-tab.active {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .classement-podium {
+            margin-bottom: 0.6rem;
+        }
+
+        .classement-podium-wrap {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .podium-place {
+            flex: 1;
+            max-width: 115px;
+            text-align: center;
+            border-radius: 12px 12px 6px 6px;
+            padding: 0.7rem 0.4rem 0.5rem;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+        }
+
+        .podium-place-vide {
+            visibility: hidden;
+        }
+
+        .podium-place-1 {
+            background: linear-gradient(180deg, #ffd86b 0%, #e8a800 100%);
+            height: 155px;
+            padding-top: 1rem;
+        }
+
+        .podium-place-2 {
+            background: linear-gradient(180deg, #e2e2e2 0%, #b0b0b8 100%);
+            height: 120px;
+        }
+
+        .podium-place-3 {
+            background: linear-gradient(180deg, #e7a468 0%, #b9702f 100%);
+            height: 100px;
+        }
+
+        .podium-medaille {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .podium-avatar {
+            font-size: 1.6rem;
+            margin: 0.25rem 0;
+        }
+
+        .podium-nom {
+            font-weight: 700;
+            font-size: 0.82rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .podium-victoires {
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 0.2rem;
+            opacity: 0.95;
         }
 
         .bracket-card h3 {
@@ -960,6 +1079,11 @@
 
             <div class="classement-panel">
                 <h2>🏆 Classement des joueurs</h2>
+                <div class="classement-tabs">
+                    <button type="button" id="classement-tab-global" class="classement-tab active">Classement global</button>
+                    <button type="button" id="classement-tab-mensuel" class="classement-tab">Ce mois-ci</button>
+                </div>
+                <div id="classement-podium" class="classement-podium"></div>
                 <div id="classement-list"></div>
                 <button type="button" id="classement-voir-plus" class="classement-voir-plus-btn hidden">Voir les 5 suivants ▼</button>
             </div>
@@ -979,6 +1103,7 @@
             <p style="margin-bottom:0.6rem;"><strong>Nom :</strong> <span id="account-name"></span></p>
             <p style="margin-bottom:0.6rem;"><strong>Email :</strong> <span id="account-email"></span></p>
             <p style="margin-bottom:0.6rem;"><strong>Trophées :</strong> <span id="account-trophies"></span> 🏆</p>
+            <div id="account-badge"></div>
             <div class="stats-joueur">
                 <div class="stat-badge stat-tournois">
                     <span class="stat-valeur" id="account-tournois-joues">0</span>
@@ -987,6 +1112,10 @@
                 <div class="stat-badge stat-victoires">
                     <span class="stat-valeur" id="account-victoires">0</span>
                     Victoires 🏆
+                </div>
+                <div class="stat-badge stat-taux">
+                    <span class="stat-valeur" id="account-taux-victoire">0%</span>
+                    Taux de victoire
                 </div>
             </div>
             <p style="margin-bottom:0.6rem;" id="account-tag"></p>
@@ -1156,6 +1285,52 @@
             selectEl.innerHTML = AVATARS_DISPONIBLES.map(function (a) {
                 return '<option value="' + a + '"' + (a === valeurSelectionnee ? ' selected' : '') + '>' + a + '</option>';
             }).join('');
+        }
+
+        // --- Badges/titres débloqués selon le nombre de victoires de tournois ---
+        // Classés du seuil le plus élevé au plus bas : on retourne le premier
+        // badge dont le seuil est atteint.
+        const BADGES_VICTOIRES = [
+            { seuil: 55, nom: 'Légende', emoji: '👑' },
+            { seuil: 45, nom: 'Mythique', emoji: '🌟' },
+            { seuil: 35, nom: 'Élite', emoji: '💠' },
+            { seuil: 25, nom: 'Grand Maître', emoji: '🏆' },
+            { seuil: 20, nom: 'Maître', emoji: '💎' },
+            { seuil: 15, nom: 'Champion', emoji: '🏅' },
+            { seuil: 10, nom: 'Expert', emoji: '🥇' },
+            { seuil: 5, nom: 'Confirmé', emoji: '🥈' },
+            { seuil: 3, nom: 'Amateur', emoji: '🥉' },
+            { seuil: 1, nom: 'Vétéran', emoji: '🔰' }
+        ];
+
+        // Retourne le badge débloqué pour un nombre de victoires donné, ou null
+        // si aucun badge n'est encore débloqué.
+        function obtenirBadge(victoires) {
+            victoires = victoires || 0;
+            for (let i = 0; i < BADGES_VICTOIRES.length; i++) {
+                if (victoires >= BADGES_VICTOIRES[i].seuil) {
+                    return BADGES_VICTOIRES[i];
+                }
+            }
+            return null;
+        }
+
+        // Génère le petit tag HTML du badge débloqué (ou une chaîne vide si aucun)
+        function genererBadgeHTML(victoires) {
+            const badge = obtenirBadge(victoires);
+            if (!badge) return '';
+            return '<span class="joueur-badge" title="Débloqué à partir de ' + badge.seuil + ' victoires">' +
+                badge.emoji + ' ' + echapperHTML(badge.nom) +
+            '</span>';
+        }
+
+        // Calcule le taux de victoire (%) à partir du nombre de victoires et du
+        // nombre de tournois joués. Retourne 0 si aucun tournoi n'a été joué.
+        function calculerTauxVictoire(victoires, tournoisJoues) {
+            victoires = victoires || 0;
+            tournoisJoues = tournoisJoues || 0;
+            if (tournoisJoues <= 0) return 0;
+            return Math.round((victoires / tournoisJoues) * 100);
         }
 
         const signupModal = document.getElementById('signup-modal');
@@ -1524,35 +1699,84 @@
         const accueilBracketList = document.getElementById('accueil-bracket-list');
 
         // --- Classement des joueurs (Accueil) : trié par nombre de victoires de tournois ---
+        // Deux modes : "global" (total de victoires de toujours) et "mensuel"
+        // (victoires des tournois dont la date tombe dans le mois en cours,
+        // recalculé à partir de la liste des tournois car ce compteur n'est
+        // pas stocké séparément par mois).
         const classementList = document.getElementById('classement-list');
+        const classementPodium = document.getElementById('classement-podium');
         const classementVoirPlusBtn = document.getElementById('classement-voir-plus');
+        const classementTabGlobal = document.getElementById('classement-tab-global');
+        const classementTabMensuel = document.getElementById('classement-tab-mensuel');
         const CLASSEMENT_PAR_PAGE = 5;
-        let classementJoueursTries = [];
+        let classementGlobalTries = [];
+        let classementMensuelTries = [];
+        let classementMode = 'global'; // 'global' ou 'mensuel'
         let classementNombreAffiches = CLASSEMENT_PAR_PAGE;
 
-        // Réaffiche la liste du classement selon le nombre de joueurs actuellement "déroulés"
+        // Construit une "marche" du podium (rang 1, 2 ou 3). Retourne une case
+        // vide (invisible) si aucun joueur n'occupe ce rang, pour garder
+        // l'alignement du podium.
+        function genererMarchePodiumHTML(j, rang) {
+            if (!j) {
+                return '<div class="podium-place podium-place-' + rang + ' podium-place-vide"></div>';
+            }
+            const medaille = rang === 1 ? '🥇' : rang === 2 ? '🥈' : '🥉';
+            return '<div class="podium-place podium-place-' + rang + '">' +
+                '<div class="podium-medaille">' + medaille + '</div>' +
+                '<div class="podium-avatar">' + echapperHTML(j.avatar || '🙂') + '</div>' +
+                '<div class="podium-nom">' + echapperHTML(j.name || 'Joueur') + genererBadgeHTML(j.victoiresTotal !== undefined ? j.victoiresTotal : j.victoires) + '</div>' +
+                '<div class="podium-victoires">🏆 ' + (j.victoires || 0) + '</div>' +
+            '</div>';
+        }
+
+        // Génère le podium visuel du top 3 (2e à gauche, 1er au centre en plus
+        // haut, 3e à droite), avec les couleurs or / argent / bronze.
+        function genererPodiumHTML(top3) {
+            return '<div class="classement-podium-wrap">' +
+                genererMarchePodiumHTML(top3[1], 2) +
+                genererMarchePodiumHTML(top3[0], 1) +
+                genererMarchePodiumHTML(top3[2], 3) +
+            '</div>';
+        }
+
+        // Réaffiche le podium + la liste du classement selon le mode actif
+        // (global ou mensuel) et le nombre de joueurs actuellement "déroulés"
         function rendreClassement() {
-            if (classementJoueursTries.length === 0) {
-                classementList.innerHTML = '<p style="text-align:center;">Aucune victoire enregistrée pour le moment.</p>';
+            const donnees = classementMode === 'global' ? classementGlobalTries : classementMensuelTries;
+
+            if (donnees.length === 0) {
+                classementPodium.innerHTML = '';
+                classementList.innerHTML = '<p style="text-align:center;">' +
+                    (classementMode === 'global' ? 'Aucune victoire enregistrée pour le moment.' : 'Aucune victoire enregistrée ce mois-ci.') +
+                    '</p>';
                 classementVoirPlusBtn.classList.add('hidden');
                 return;
             }
 
-            const joueursAffiches = classementJoueursTries.slice(0, classementNombreAffiches);
+            classementPodium.innerHTML = genererPodiumHTML(donnees.slice(0, 3));
+
+            const reste = donnees.slice(3);
+            if (reste.length === 0) {
+                classementList.innerHTML = '';
+                classementVoirPlusBtn.classList.add('hidden');
+                return;
+            }
+
+            const joueursAffiches = reste.slice(0, classementNombreAffiches);
 
             classementList.innerHTML = joueursAffiches.map(function (j, index) {
-                const rang = index + 1;
-                const medaille = rang === 1 ? '🥇' : rang === 2 ? '🥈' : rang === 3 ? '🥉' : ('#' + rang);
+                const rang = index + 4;
                 return '<div class="classement-ligne">' +
-                    '<span class="classement-rang">' + medaille + '</span>' +
+                    '<span class="classement-rang">#' + rang + '</span>' +
                     '<span class="classement-avatar">' + echapperHTML(j.avatar || '🙂') + '</span>' +
-                    '<span class="classement-nom">' + echapperHTML(j.name || 'Joueur') + '</span>' +
+                    '<span class="classement-nom">' + echapperHTML(j.name || 'Joueur') + genererBadgeHTML(j.victoiresTotal !== undefined ? j.victoiresTotal : j.victoires) + '</span>' +
                     '<span class="classement-victoires">🏆 ' + (j.victoires || 0) + '</span>' +
                 '</div>';
             }).join('');
 
-            const ilEnResteAAfficher = classementNombreAffiches < classementJoueursTries.length;
-            const onPeutReduire = !ilEnResteAAfficher && classementJoueursTries.length > CLASSEMENT_PAR_PAGE;
+            const ilEnResteAAfficher = classementNombreAffiches < reste.length;
+            const onPeutReduire = !ilEnResteAAfficher && reste.length > CLASSEMENT_PAR_PAGE;
 
             if (ilEnResteAAfficher) {
                 classementVoirPlusBtn.textContent = 'Voir les 5 suivants ▼';
@@ -1565,18 +1789,54 @@
             }
         }
 
-        // Charge l'annuaire des joueurs et construit le classement trié par victoires décroissantes
+        // Calcule le classement du mois en cours à partir des tournois dont le
+        // vainqueur a été renseigné et dont la date tombe dans le mois/l'année
+        // actuels.
+        function calculerClassementMensuel(tournoisData, joueursData) {
+            const maintenant = new Date();
+            const moisActuel = maintenant.getMonth();
+            const anneeActuelle = maintenant.getFullYear();
+            const compteurs = {};
+
+            Object.keys(tournoisData).forEach(function (key) {
+                const t = tournoisData[key];
+                if (!t.vainqueurUid || !t.date) return;
+                const d = new Date(t.date + 'T00:00:00');
+                if (isNaN(d.getTime())) return;
+                if (d.getMonth() === moisActuel && d.getFullYear() === anneeActuelle) {
+                    compteurs[t.vainqueurUid] = (compteurs[t.vainqueurUid] || 0) + 1;
+                }
+            });
+
+            return Object.keys(compteurs)
+                .map(function (uid) {
+                    const j = joueursData[uid] || {};
+                    // "victoires" ici = victoires du mois (classement mensuel), tandis que
+                    // "victoiresTotal" garde le total à vie du joueur pour le calcul du badge
+                    // (les badges sont débloqués sur la base du total de victoires, pas du mois).
+                    return { uid: uid, name: j.name, avatar: j.avatar, victoires: compteurs[uid], victoiresTotal: j.victoires || 0 };
+                })
+                .sort(function (a, b) { return b.victoires - a.victoires; });
+        }
+
+        // Charge l'annuaire des joueurs et la liste des tournois, puis construit
+        // les deux classements (global et mensuel) triés par victoires décroissantes
         function afficherClassement() {
+            classementPodium.innerHTML = '';
             classementList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
             classementNombreAffiches = CLASSEMENT_PAR_PAGE;
 
-            joueursRef.once('value')
-                .then(function (snapshot) {
-                    const data = snapshot.val() || {};
-                    classementJoueursTries = Object.keys(data)
-                        .map(function (key) { return Object.assign({ uid: key }, data[key]); })
+            Promise.all([joueursRef.once('value'), tournoisRef.once('value')])
+                .then(function (resultats) {
+                    const joueursData = resultats[0].val() || {};
+                    const tournoisData = resultats[1].val() || {};
+
+                    classementGlobalTries = Object.keys(joueursData)
+                        .map(function (key) { return Object.assign({ uid: key }, joueursData[key]); })
                         .filter(function (j) { return (j.victoires || 0) > 0; })
                         .sort(function (a, b) { return (b.victoires || 0) - (a.victoires || 0); });
+
+                    classementMensuelTries = calculerClassementMensuel(tournoisData, joueursData);
 
                     rendreClassement();
                 })
@@ -1587,11 +1847,32 @@
         }
 
         classementVoirPlusBtn.addEventListener('click', function () {
-            if (classementNombreAffiches < classementJoueursTries.length) {
+            const donnees = classementMode === 'global' ? classementGlobalTries : classementMensuelTries;
+            const reste = donnees.slice(3);
+            if (classementNombreAffiches < reste.length) {
                 classementNombreAffiches += CLASSEMENT_PAR_PAGE;
             } else {
                 classementNombreAffiches = CLASSEMENT_PAR_PAGE;
             }
+            rendreClassement();
+        });
+
+        // Bascule entre classement global et classement du mois
+        classementTabGlobal.addEventListener('click', function () {
+            if (classementMode === 'global') return;
+            classementMode = 'global';
+            classementTabGlobal.classList.add('active');
+            classementTabMensuel.classList.remove('active');
+            classementNombreAffiches = CLASSEMENT_PAR_PAGE;
+            rendreClassement();
+        });
+
+        classementTabMensuel.addEventListener('click', function () {
+            if (classementMode === 'mensuel') return;
+            classementMode = 'mensuel';
+            classementTabMensuel.classList.add('active');
+            classementTabGlobal.classList.remove('active');
+            classementNombreAffiches = CLASSEMENT_PAR_PAGE;
             rendreClassement();
         });
 
@@ -1700,11 +1981,13 @@
             const cartesHTML = page.map(function (j) {
                 const details = [j.tag ? '#' + echapperHTML(j.tag.replace(/^#/, '')) : null, j.identifiant ? echapperHTML(j.identifiant) : null]
                     .filter(Boolean).join(' · ');
+                const tauxVictoire = calculerTauxVictoire(j.victoires, j.tournoisJoues);
                 return '<div class="joueur-resultat-card">' +
                     '<div class="infos">' +
                         '<h4><span class="avatar-emoji">' + echapperHTML(j.avatar || '🙂') + '</span>' + echapperHTML(j.name || 'Joueur') + '</h4>' +
                         (details ? '<p>' + details + '</p>' : '') +
-                        '<p class="stats-mini">🎮 ' + (j.tournoisJoues || 0) + ' tournois joués · 🏆 ' + (j.victoires || 0) + ' victoires</p>' +
+                        '<p class="stats-mini">🎮 ' + (j.tournoisJoues || 0) + ' tournois joués · 🏆 ' + (j.victoires || 0) + ' victoires · 📊 ' + tauxVictoire + '% de victoires</p>' +
+                        genererBadgeHTML(j.victoires) +
                     '</div>' +
                     '<div class="joueur-actions">' +
                         '<button type="button" class="joueur-message-btn" data-uid="' + echapperHTML(j.uid) + '">Message</button>' +
@@ -1843,6 +2126,7 @@
                     ].filter(Boolean);
 
                     profilDetailsEl.innerHTML = details.map(function (d) { return echapperHTML(d); }).join('<br>') +
+                        genererBadgeHTML(j.victoires) +
                         '<div class="stats-joueur">' +
                             '<div class="stat-badge stat-tournois">' +
                                 '<span class="stat-valeur">' + (j.tournoisJoues || 0) + '</span>' +
@@ -1851,6 +2135,10 @@
                             '<div class="stat-badge stat-victoires">' +
                                 '<span class="stat-valeur">' + (j.victoires || 0) + '</span>' +
                                 'Victoires 🏆' +
+                            '</div>' +
+                            '<div class="stat-badge stat-taux">' +
+                                '<span class="stat-valeur">' + calculerTauxVictoire(j.victoires, j.tournoisJoues) + '%</span>' +
+                                'Taux de victoire' +
                             '</div>' +
                         '</div>';
                 })
@@ -2230,6 +2518,8 @@
             document.getElementById('account-trophies').textContent = user.trophies || '';
             document.getElementById('account-tournois-joues').textContent = user.tournoisJoues || 0;
             document.getElementById('account-victoires').textContent = user.victoires || 0;
+            document.getElementById('account-taux-victoire').textContent = calculerTauxVictoire(user.victoires, user.tournoisJoues) + '%';
+            document.getElementById('account-badge').innerHTML = genererBadgeHTML(user.victoires);
 
             const tagEl = document.getElementById('account-tag');
             tagEl.innerHTML = '<strong>Tag Supercell (#) :</strong> ' + (user.tag ? echapperHTML(user.tag) : 'Non renseigné');
