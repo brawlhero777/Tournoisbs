@@ -2163,31 +2163,49 @@
             const ancienTag = window.currentUser.tag || '';
             const ancienIdentifiant = window.currentUser.identifiant || '';
 
-            comptesRef.child(uid).update({
-                name: name,
-                trophies: trophies,
-                tag: tag,
-                identifiant: identifiant,
-                avatar: avatar
-            })
+            etiqueterErreur(
+                comptesRef.child(uid).update({
+                    name: name,
+                    trophies: trophies,
+                    tag: tag,
+                    identifiant: identifiant,
+                    avatar: avatar
+                }),
+                'écriture du profil privé (comptes/' + uid + ')'
+            )
                 .then(function () {
                     const operations = [];
 
                     // Nettoie les anciennes entrées d'index si le tag/identifiant a changé
                     if (ancienTag && ancienTag !== tag) {
-                        operations.push(pseudosRef.child(cleanPseudoKey(ancienTag)).remove());
+                        operations.push(etiqueterErreur(
+                            pseudosRef.child(cleanPseudoKey(ancienTag)).remove(),
+                            'suppression ancien tag (pseudos/' + cleanPseudoKey(ancienTag) + ')'
+                        ));
                     }
                     if (ancienIdentifiant && ancienIdentifiant !== identifiant) {
-                        operations.push(pseudosRef.child(cleanPseudoKey(ancienIdentifiant)).remove());
+                        operations.push(etiqueterErreur(
+                            pseudosRef.child(cleanPseudoKey(ancienIdentifiant)).remove(),
+                            'suppression ancien identifiant (pseudos/' + cleanPseudoKey(ancienIdentifiant) + ')'
+                        ));
                     }
                     if (tag) {
-                        operations.push(pseudosRef.child(cleanPseudoKey(tag)).set({ uid: uid, name: name }));
+                        operations.push(etiqueterErreur(
+                            pseudosRef.child(cleanPseudoKey(tag)).set({ uid: uid, name: name }),
+                            'écriture nouveau tag (pseudos/' + cleanPseudoKey(tag) + ')'
+                        ));
                     }
                     if (identifiant) {
-                        operations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
+                        operations.push(etiqueterErreur(
+                            pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }),
+                            'écriture nouvel identifiant (pseudos/' + cleanPseudoKey(identifiant) + ')'
+                        ));
                     }
                     // Met à jour l'annuaire public utilisé par la recherche et les profils
-                    operations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar }));
+                    operations.push(etiqueterErreur(
+                        joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar }),
+                        'écriture annuaire public (joueurs/' + uid + ')'
+                    ));
 
                     return Promise.all(operations);
                 })
@@ -2198,7 +2216,9 @@
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
-                    parametresErreur.textContent = "Erreur lors de l'enregistrement : " + error.message;
+                    const etape = error.etape ? ' [étape : ' + error.etape + ']' : '';
+                    const code = error.code ? ' (code : ' + error.code + ')' : '';
+                    parametresErreur.textContent = "Erreur lors de l'enregistrement" + etape + code + " : " + error.message;
                 })
                 .finally(function () {
                     parametresSaveBtn.disabled = false;
@@ -2862,9 +2882,17 @@
             // quand c'est l'admin qui crédite le compteur d'un AUTRE joueur.
             // set()/update() avec ServerValue.increment ne nécessite que le
             // droit d'écriture, qu'on a bien pour ces deux champs.
+            // Les deux écritures sont étiquetées séparément pour savoir
+            // précisément laquelle échoue le cas échéant.
             return Promise.all([
-                comptesRef.child(uid).child(champ).set(firebase.database.ServerValue.increment(delta)),
-                joueursRef.child(uid).child(champ).set(firebase.database.ServerValue.increment(delta))
+                etiqueterErreur(
+                    comptesRef.child(uid).child(champ).set(firebase.database.ServerValue.increment(delta)),
+                    'écriture ' + champ + ' sur comptes/' + uid
+                ),
+                etiqueterErreur(
+                    joueursRef.child(uid).child(champ).set(firebase.database.ServerValue.increment(delta)),
+                    'écriture ' + champ + ' sur joueurs/' + uid
+                )
             ]);
         }
 
