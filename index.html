@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Inscris-toi aux tournois Brawl Stars, retrouve d'autres joueurs, discute en temps réel et suis les résultats des tournois passés.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Ctext%20y%3D%22.9em%22%20font-size%3D%2290%22%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+
+    <!-- PWA : rend le site installable sur mobile (icône + ouverture en plein écran) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2575fc">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- Meta spécifiques iOS : Safari ne lit pas le manifest.json pour l'icône/le mode standalone -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BS Tournois">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
     <title>Tournois Brawl Stars</title>
     <style>
         * {
@@ -124,6 +137,22 @@
             border-color: #2575fc;
         }
 
+        .modal textarea {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .modal textarea:focus {
+            outline: none;
+            border-color: #2575fc;
+        }
+
         .modal button {
             width: 100%;
             padding: 0.8rem;
@@ -149,9 +178,79 @@
             max-width: 500px;
         }
 
+        .filtre-tournois-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            align-items: flex-end;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 0.8rem 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .filtre-groupe {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 140px;
+            min-width: 130px;
+        }
+
+        .filtre-groupe label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .filtre-groupe select,
+        .filtre-groupe input {
+            padding: 0.45rem 0.6rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        #filtre-reinitialiser-btn {
+            padding: 0.5rem 0.9rem;
+            border: none;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #6a11cb;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        #filtre-reinitialiser-btn:hover {
+            opacity: 0.85;
+        }
+
+        .filtre-aucun-resultat {
+            text-align: center;
+            padding: 1rem;
+        }
+
         .tournois-container h2 {
             text-align: center;
             margin-bottom: 1.2rem;
+        }
+
+        .calendrier-jour-entete {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 1rem 0 0.4rem;
+            padding-bottom: 0.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .calendrier-jour-entete:first-child {
+            margin-top: 0;
         }
 
         .tournoi-card {
@@ -200,6 +299,50 @@
             cursor: not-allowed;
         }
 
+        .equipe-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            padding: 0.6rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 0.6rem;
+        }
+
+        .equipe-item-nom {
+            font-weight: 600;
+            color: #2575fc;
+        }
+
+        .equipe-item-membres {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.15rem;
+        }
+
+        .equipe-rejoindre-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .equipe-rejoindre-btn:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .equipe-item-complete .equipe-item-nom {
+            color: #777;
+        }
+
         .supprimer-btn {
             margin-top: 0.5rem;
             width: 100%;
@@ -242,6 +385,32 @@
             font-size: 0.85rem;
             color: #333;
             line-height: 1.5;
+        }
+
+        .partager-btn {
+            margin-top: 0.6rem;
+            width: 100%;
+            padding: 0.55rem;
+            border: 2px solid #2575fc;
+            border-radius: 999px;
+            background: white;
+            color: #2575fc;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .partager-btn:hover {
+            background: #f0f6ff;
+        }
+
+        .tournoi-cible-surbrillance {
+            animation: surbrillancePulse 1.2s ease-in-out 2;
+        }
+
+        @keyframes surbrillancePulse {
+            0%, 100% { box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2); }
+            50% { box-shadow: 0 0 0 4px #2575fc, 0 4px 14px rgba(0, 0, 0, 0.2); }
         }
 
         .msg-tabs {
@@ -479,6 +648,185 @@
             position: relative;
         }
 
+        /* --- Réactions emoji sur les messages --- */
+        .reactions-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.3rem;
+        }
+
+        .chat-message.mine .reactions-row {
+            justify-content: flex-end;
+        }
+
+        .reaction-chip {
+            background: #eef1f5;
+            border: 1px solid #dde2e8;
+            border-radius: 999px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.78rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #333;
+        }
+
+        .reaction-chip.mienne {
+            background: #e3ecff;
+            border-color: #2575fc;
+        }
+
+        .reaction-add-btn {
+            background: #eef1f5;
+            border: 1px solid #dde2e8;
+            border-radius: 999px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .reaction-picker {
+            position: absolute;
+            background: white;
+            border-radius: 999px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            padding: 0.4rem 0.6rem;
+            display: flex;
+            gap: 0.4rem;
+            z-index: 50;
+        }
+
+        .reaction-picker button {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .reaction-picker button:hover {
+            transform: scale(1.2);
+        }
+
+        /* --- Amis / abonnements --- */
+        .amis-card {
+            background: white;
+            color: #333;
+            border-radius: 12px;
+            padding: 0.7rem 1rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            cursor: pointer;
+        }
+
+        .amis-card .infos h4 {
+            font-size: 1rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .amis-card .infos p {
+            font-size: 0.78rem;
+            color: #666;
+        }
+
+        .amis-card button {
+            padding: 0.45rem 0.8rem;
+            border: none;
+            border-radius: 999px;
+            background: #eee;
+            color: #c0392b;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .amis-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .amis-tab {
+            flex: 1;
+            padding: 0.6rem;
+            border: none;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .amis-tab.active {
+            background: white;
+            color: #2575fc;
+        }
+
+        .profil-follow-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .profil-follow-row button {
+            flex: 1;
+            padding: 0.6rem;
+            border: none;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .btn-ami {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .btn-ami.actif {
+            background: #eee;
+            color: #333;
+        }
+
+        .btn-suivre {
+            background: #f0f2f5;
+            color: #2575fc;
+            border: 1px solid #2575fc !important;
+        }
+
+        .btn-suivre.actif {
+            background: #2575fc;
+            color: white;
+        }
+
+        .profil-bio {
+            font-size: 0.85rem;
+            color: #444;
+            background: #f5f8ff;
+            border-radius: 10px;
+            padding: 0.6rem 0.8rem;
+            margin-bottom: 0.8rem;
+            white-space: pre-line;
+            text-align: left;
+        }
+
+        .profil-extra-stat {
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 0.3rem;
+        }
+
+        .push-btn {
+            background: #2e7d32 !important;
+        }
+
         .badge {
             position: absolute;
             top: -6px;
@@ -652,12 +1000,46 @@
             white-space: nowrap;
         }
 
+        .joueur-badge-titre.badge-recrue {
+            background: linear-gradient(135deg, #8d6e63 0%, #4e342e 100%);
+        }
+
+        .joueur-badge-titre.badge-confirme {
+            background: linear-gradient(135deg, #78909c 0%, #37474f 100%);
+        }
+
         .joueur-badge-titre.badge-veteran {
             background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
         }
 
         .joueur-badge-titre.badge-legende {
             background: linear-gradient(135deg, #ff8a00 0%, #e52e71 100%);
+        }
+
+        .joueur-badge-titre.badge-maitre {
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+        }
+
+        .joueur-badge-titre.badge-champion {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            color: #3a2a00;
+        }
+
+        .joueur-badge-titre.badge-mythique {
+            background: linear-gradient(135deg, #a044ff 0%, #6a11cb 40%, #0f0c29 100%);
+            box-shadow: 0 0 8px rgba(160, 68, 255, 0.6);
+        }
+
+        .prochain-badge-info {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-top: 0.2rem;
+        }
+
+        #account-prochain-badge {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin: -0.4rem 0 0.6rem;
         }
 
         #account-badge-titre {
@@ -944,6 +1326,173 @@
             opacity: 0.9;
         }
 
+        /* ---- Arbre de bracket interactif ---- */
+        .bracket-scroll-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin: 0.4rem -1.2rem 0;
+            padding: 0.3rem 1.2rem 0.6rem;
+        }
+
+        .bracket-tree {
+            position: relative;
+            display: flex;
+            gap: 2.4rem;
+            width: max-content;
+        }
+
+        .bracket-round-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            gap: 1rem;
+            min-width: 150px;
+        }
+
+        .bracket-round-label {
+            text-align: center;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.4rem;
+        }
+
+        .bracket-round-matchs {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            gap: 1.2rem;
+            flex: 1;
+        }
+
+        .bracket-match {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e2e2ee;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fafbff;
+            z-index: 1;
+        }
+
+        .bracket-competitor {
+            display: block;
+            padding: 0.5rem 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #e8e8f2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 165px;
+        }
+
+        .bracket-competitor:last-child {
+            border-bottom: none;
+        }
+
+        .bracket-competitor.vide {
+            color: #bbb;
+            font-weight: 500;
+            font-style: italic;
+        }
+
+        .bracket-competitor.gagnant {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .bracket-competitor.cliquable {
+            cursor: pointer;
+        }
+
+        .bracket-competitor.cliquable:hover {
+            background: #eef2ff;
+        }
+
+        svg.bracket-connecteurs {
+            z-index: 0;
+        }
+
+        .bracket-champion {
+            margin-top: 0.9rem;
+            text-align: center;
+            font-weight: 700;
+            color: #b8860b;
+            background: #fff8e1;
+            border-radius: 10px;
+            padding: 0.6rem;
+        }
+
+        .bracket-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        .bracket-generer-btn {
+            width: 100%;
+            padding: 0.55rem;
+            border: none;
+            border-radius: 999px;
+            background: #6a11cb;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bracket-generer-btn:hover {
+            opacity: 0.9;
+        }
+
+        .bracket-pdf-btn {
+            width: 100%;
+            padding: 0.55rem;
+            border: 2px solid #2575fc;
+            border-radius: 999px;
+            background: white;
+            color: #2575fc;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bracket-pdf-btn:hover {
+            background: #f0f6ff;
+        }
+
+        .bracket-pdf-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .bracket-image-btn {
+            width: 100%;
+            padding: 0.55rem;
+            border: 2px solid #6a11cb;
+            border-radius: 999px;
+            background: white;
+            color: #6a11cb;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .bracket-image-btn:hover {
+            background: #f4edff;
+        }
+
+        .bracket-image-btn:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
         .email-non-verifie-banniere {
             background: #fff3cd;
             color: #7a5c00;
@@ -1003,6 +1552,15 @@
                 <label for="avatar">Avatar</label>
                 <select id="avatar" class="avatar-select"></select>
 
+                <label for="brawler-favori">Brawler favori (facultatif)</label>
+                <input type="text" id="brawler-favori" placeholder="Ex : Spike, Léon, Colt...">
+
+                <label for="meilleur-classement">Meilleur classement (facultatif)</label>
+                <input type="text" id="meilleur-classement" placeholder="Ex : Légende, Masters, Top 200...">
+
+                <label for="bio">Bio (facultatif)</label>
+                <textarea id="bio" rows="3" maxlength="200" placeholder="Parle un peu de toi en quelques mots..."></textarea>
+
                 <!-- Champ piège anti-bot (honeypot) : invisible pour un humain, souvent rempli automatiquement par les bots -->
                 <div style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;" aria-hidden="true">
                     <label for="site-web">Laissez ce champ vide</label>
@@ -1042,7 +1600,12 @@
         <div class="modal" id="profil-modal">
             <p id="profil-avatar" class="compte-avatar-large"></p>
             <h2 id="profil-nom">Profil</h2>
-            <p id="profil-details" style="text-align:center; color:#555; margin-bottom:1rem;"></p>
+            <p id="profil-details" style="text-align:center; color:#555; margin-bottom:0.6rem;"></p>
+            <div id="profil-bio" class="profil-bio hidden"></div>
+            <div id="profil-follow-row" class="profil-follow-row hidden">
+                <button type="button" id="profil-ami-btn" class="btn-ami">🤝 Ajouter en ami</button>
+                <button type="button" id="profil-suivre-btn" class="btn-suivre">➕ Suivre</button>
+            </div>
             <button type="button" id="profil-fermer-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color:white; font-weight:600; cursor:pointer;">Fermer</button>
         </div>
     </div>
@@ -1066,10 +1629,34 @@
                 <label for="parametres-avatar">Avatar</label>
                 <select id="parametres-avatar" class="avatar-select"></select>
 
+                <label for="parametres-brawler-favori">Brawler favori (facultatif)</label>
+                <input type="text" id="parametres-brawler-favori" placeholder="Ex : Spike, Léon, Colt...">
+
+                <label for="parametres-meilleur-classement">Meilleur classement (facultatif)</label>
+                <input type="text" id="parametres-meilleur-classement" placeholder="Ex : Légende, Masters, Top 200...">
+
+                <label for="parametres-bio">Bio (facultatif)</label>
+                <textarea id="parametres-bio" rows="3" maxlength="200" placeholder="Parle un peu de toi en quelques mots..."></textarea>
+
                 <button type="button" id="parametres-save-btn">Enregistrer</button>
             </form>
             <p id="parametres-erreur" style="color:#c0392b; text-align:center; margin-top:0.6rem; font-size:0.85rem;"></p>
             <button type="button" id="parametres-annuler-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:#eee; color:#333; font-weight:600; cursor:pointer; margin-top:0.6rem;">Annuler</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="equipe-overlay">
+        <div class="modal" id="equipe-modal">
+            <h2>Choisis ton équipe</h2>
+            <p id="equipe-info" style="text-align:center; color:#555; font-size:0.85rem; margin-bottom:1rem;"></p>
+            <div id="equipe-liste"></div>
+            <div id="equipe-creation">
+                <label for="equipe-nom-input">Créer une nouvelle équipe</label>
+                <input type="text" id="equipe-nom-input" placeholder="Nom de l'équipe (ex : Les Invincibles)" maxlength="30">
+                <button type="button" id="equipe-creer-btn">Créer et rejoindre</button>
+            </div>
+            <p id="equipe-erreur" style="color:#c0392b; text-align:center; margin-top:0.6rem; font-size:0.85rem;"></p>
+            <button type="button" id="equipe-annuler-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:#eee; color:#333; font-weight:600; cursor:pointer; margin-top:0.6rem;">Annuler</button>
         </div>
     </div>
 
@@ -1111,6 +1698,7 @@
             <h2>Mon compte</h2>
             <p id="account-avatar" class="compte-avatar-large"></p>
             <div id="account-badge-titre" class="joueur-badge-titre hidden"></div>
+            <p id="account-prochain-badge"></p>
             <div id="account-email-non-verifie" class="email-non-verifie-banniere hidden">
                 ⚠️ Ton adresse email n'est pas vérifiée.
                 <br>
@@ -1134,7 +1722,11 @@
                 </div>
             </div>
             <p style="margin-bottom:0.6rem;" id="account-tag"></p>
-            <p style="margin-bottom:1.2rem;" id="account-identifiant"></p>
+            <p style="margin-bottom:0.6rem;" id="account-identifiant"></p>
+            <p style="margin-bottom:0.6rem;" id="account-brawler-favori"></p>
+            <p style="margin-bottom:1.2rem;" id="account-meilleur-classement"></p>
+            <div id="account-bio" class="profil-bio hidden"></div>
+            <button type="button" id="amis-depuis-compte-btn" style="background:#555; margin-bottom:0.8rem;">🤝 Mes amis / abonnements</button>
             <button type="button" id="parametres-btn" style="background:#555; margin-bottom:0.8rem;">⚙️ Modifier le profil</button>
             <button type="button" id="logout-btn" style="background:#c0392b; margin-bottom:0.8rem;">Se déconnecter</button>
             <button type="button" id="back-btn">Retour</button>
@@ -1165,7 +1757,36 @@
                 <label for="t-participants">Nombre de participants</label>
                 <select id="t-participants"></select>
 
+                <label for="t-description">Description (facultatif)</label>
+                <textarea id="t-description" rows="3" placeholder="Règles, format, récompenses..."></textarea>
+
                 <button type="button" id="t-submit-btn">Ajouter le tournoi</button>
+            </div>
+
+            <div class="filtre-tournois-panel">
+                <div class="filtre-groupe">
+                    <label for="filtre-mode">Mode de jeu</label>
+                    <select id="filtre-mode">
+                        <option value="">Tous les modes</option>
+                        <option value="Tournois 1v1">1v1</option>
+                        <option value="Tournois 2v2">2v2</option>
+                        <option value="Tournois 3v3">3v3</option>
+                        <option value="Tournois 3v3 mode aléatoire">3v3 aléatoire</option>
+                    </select>
+                </div>
+                <div class="filtre-groupe">
+                    <label for="filtre-date">À partir du</label>
+                    <input type="date" id="filtre-date">
+                </div>
+                <div class="filtre-groupe">
+                    <label for="filtre-places">Places restantes</label>
+                    <select id="filtre-places">
+                        <option value="">Toutes</option>
+                        <option value="disponibles">Places disponibles</option>
+                        <option value="presque-complet">Presque complet (≤ 2 places)</option>
+                    </select>
+                </div>
+                <button type="button" id="filtre-reinitialiser-btn">✕ Réinitialiser</button>
             </div>
 
             <div id="tournois-list"></div>
@@ -1228,6 +1849,11 @@
                 <a href="https://www.tiktok.com/@equinoxx_winstreak?_r=1&_t=ZN-97tlLD5pqQY" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Voir le profil</a>
             </div>
             <div class="tournoi-card">
+                <h3>📸 Instagram</h3>
+                <p>Suis le compte pour les photos et annonces des tournois.</p>
+                <a href="https://www.instagram.com/TON_PSEUDO_ICI" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Voir le profil</a>
+            </div>
+            <div class="tournoi-card">
                 <h3>⭐ Ajoute-moi sur Brawl Stars</h3>
                 <p>Ajoute-moi en ami directement dans le jeu.</p>
                 <a href="https://link.brawlstars.com/invite/friend/en/?tag=2ULRVCY2V" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Ajouter en ami</a>
@@ -1240,8 +1866,26 @@
     <main id="notifications-page" class="hidden">
         <div class="tournois-container">
             <h2>📥 Boîte de réception</h2>
+            <button type="button" id="push-activer-btn" class="inscrit-btn push-btn hidden" style="margin-bottom:1rem;">🔔 Activer les notifications push</button>
+            <p id="push-statut" style="text-align:center; font-size:0.8rem; margin-bottom:1rem;"></p>
             <div id="notifications-list"></div>
             <button type="button" class="retour-btn" id="back-btn-notifications" style="margin-top:1rem;">Retour</button>
+        </div>
+    </main>
+
+    <main id="amis-page" class="hidden">
+        <div class="tournois-container">
+            <h2>🤝 Amis &amp; abonnements</h2>
+
+            <div class="amis-tabs">
+                <button type="button" id="amis-tab-amis-btn" class="amis-tab active">Amis</button>
+                <button type="button" id="amis-tab-suivis-btn" class="amis-tab">Abonnements</button>
+            </div>
+
+            <div id="amis-liste-amis"></div>
+            <div id="amis-liste-suivis" class="hidden"></div>
+
+            <button type="button" class="retour-btn" id="back-btn-amis">Retour</button>
         </div>
     </main>
 
@@ -1250,14 +1894,20 @@
         <button id="compte-btn">Compte</button>
         <button id="message-btn">Message<span class="badge hidden" id="message-badge">0</span></button>
         <button id="notifications-btn">Boîte<span class="badge hidden" id="notifications-badge">0</span></button>
+        <button id="amis-btn">Amis</button>
         <button id="tournois-btn">Tournois</button>
         <button id="liens-btn">Liens</button>
+        <button id="install-btn" class="hidden">📲 Installer l'app</button>
     </nav>
 
     <!-- Firebase SDK (compat, simple à utiliser sans outil de build) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-database-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-messaging-compat.min.js"></script>
+    <!-- Utilisées uniquement pour le téléchargement du bracket en PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
         // ============================================================
@@ -1281,6 +1931,8 @@
         const pseudosRef = db.ref('pseudos'); // index public tag/identifiant Supercell -> {uid, name}, pour retrouver un utilisateur en message privé
         const joueursRef = db.ref('joueurs'); // annuaire public des joueurs (name, tag, identifiant) pour la recherche sur l'Accueil
         const amisRef = db.ref('amis'); // amis/{monUid}/{autreUid} = { name, since }
+        const suivisRef = db.ref('suivis'); // suivis/{monUid}/{autreUid} = { name, since } : abonnement à sens unique (suivre un joueur)
+        const fcmTokensRef = db.ref('fcmTokens'); // fcmTokens/{uid}/{token} = true : jetons d'appareils pour les notifications push
         // ============================================================
         // Authentification réelle : Firebase Auth (email + mot de passe).
         // Les profils (nom, trophées, tag...) sont stockés dans
@@ -1312,6 +1964,9 @@
         const tagInput = document.getElementById('tag');
         const identifiantInput = document.getElementById('identifiant');
         const avatarInput = document.getElementById('avatar');
+        const brawlerFavoriInput = document.getElementById('brawler-favori');
+        const meilleurClassementInput = document.getElementById('meilleur-classement');
+        const bioInput = document.getElementById('bio');
         const honeypotInput = document.getElementById('site-web');
         const DELAI_MIN_INSCRIPTION_MS = 2500; // délai minimum réaliste pour un humain remplissant le formulaire
         remplirSelectAvatars(avatarInput, AVATARS_DISPONIBLES[0]);
@@ -1404,12 +2059,15 @@
                     demarrerSuiviBadgeMessages();
                     demarrerSuiviBadgeNotifications();
                     traiterParticipationsTournoisTermines();
+                    verifierRappelsAutomatiques();
+                    demarrerRappelsAutomatiques();
                 });
             } else {
                 window.currentUser = null;
                 welcome.textContent = 'Ma page';
                 arreterSuiviBadgeMessages();
                 arreterSuiviBadgeNotifications();
+                arreterRappelsAutomatiques();
                 chargementOverlay.classList.add('hidden');
                 overlay.classList.remove('hidden');
                 signupModal.dataset.ouvertureTimestamp = Date.now();
@@ -1459,6 +2117,9 @@
             const tag = tagInput.value.trim();
             const identifiant = identifiantInput.value.trim();
             const avatar = avatarInput.value || AVATARS_DISPONIBLES[0];
+            const brawlerFavori = brawlerFavoriInput ? brawlerFavoriInput.value.trim() : '';
+            const meilleurClassement = meilleurClassementInput ? meilleurClassementInput.value.trim() : '';
+            const bio = bioInput ? bioInput.value.trim() : '';
 
             if (!name || !email || !password || !trophies) {
                 alert('Merci de remplir tous les champs.');
@@ -1493,9 +2154,12 @@
                         tag: tag,
                         identifiant: identifiant,
                         avatar: avatar,
+                        brawlerFavori: brawlerFavori,
+                        meilleurClassement: meilleurClassement,
+                        bio: bio,
                         creeLe: firebase.database.ServerValue.TIMESTAMP
                     }).then(function () {
-                        window.currentUser = { uid, name, email, trophies, tag, identifiant, avatar, emailVerified: credential.user.emailVerified };
+                        window.currentUser = { uid, name, email, trophies, tag, identifiant, avatar, brawlerFavori, meilleurClassement, bio, emailVerified: credential.user.emailVerified };
                         // Indexe le tag et/ou l'identifiant Supercell publiquement pour retrouver ce compte en message privé
                         const indexations = [];
                         if (tag) {
@@ -1505,7 +2169,7 @@
                             indexations.push(pseudosRef.child(cleanPseudoKey(identifiant)).set({ uid: uid, name: name }));
                         }
                         // Ajoute le joueur à l'annuaire public utilisé par la recherche sur l'Accueil
-                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar }));
+                        indexations.push(joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar, brawlerFavori: brawlerFavori, meilleurClassement: meilleurClassement, bio: bio }));
                         // Envoie un email de vérification (ne bloque pas la création du compte si ça échoue)
                         indexations.push(credential.user.sendEmailVerification().catch(function (error) {
                             console.error('Erreur envoi email de vérification :', error);
@@ -1612,21 +2276,25 @@
         const messagePage = document.getElementById('message-page');
         const liensPage = document.getElementById('liens-page');
         const notificationsPage = document.getElementById('notifications-page');
+        const amisPage = document.getElementById('amis-page');
         const accueilBtn = document.getElementById('accueil-btn');
         const compteBtn = document.getElementById('compte-btn');
         const messageBtn = document.getElementById('message-btn');
         const notificationsBtn = document.getElementById('notifications-btn');
         const liensBtn = document.getElementById('liens-btn');
+        const amisBtn = document.getElementById('amis-btn');
+        const amisDepuisCompteBtn = document.getElementById('amis-depuis-compte-btn');
         const backBtnLiens = document.getElementById('back-btn-liens');
         const backBtn = document.getElementById('back-btn');
         const backBtnMessage = document.getElementById('back-btn-message');
         const backBtnNotifications = document.getElementById('back-btn-notifications');
+        const backBtnAmis = document.getElementById('back-btn-amis');
         const notificationsList = document.getElementById('notifications-list');
 
         // Cache toutes les pages, puis affiche celle demandée
         function afficherPage(page) {
             quitterConversation();
-            [mainPage, accountPage, messagePage, liensPage, tournoisPage, notificationsPage].forEach(function (p) {
+            [mainPage, accountPage, messagePage, liensPage, tournoisPage, notificationsPage, amisPage].forEach(function (p) {
                 if (p) p.classList.add('hidden');
             });
             page.classList.remove('hidden');
@@ -1647,9 +2315,30 @@
             }
             afficherPage(notificationsPage);
             afficherNotifications();
+            if (typeof majAffichagePush === 'function') majAffichagePush();
         });
 
         backBtnNotifications.addEventListener('click', function () {
+            afficherPage(mainPage);
+        });
+
+        amisBtn.addEventListener('click', function () {
+            if (!window.currentUser) {
+                alert("Connecte-toi d'abord (bouton Compte) pour voir tes amis.");
+                return;
+            }
+            afficherPage(amisPage);
+            activerOngletAmis('amis');
+        });
+
+        if (amisDepuisCompteBtn) {
+            amisDepuisCompteBtn.addEventListener('click', function () {
+                afficherPage(amisPage);
+                activerOngletAmis('amis');
+            });
+        }
+
+        backBtnAmis.addEventListener('click', function () {
             afficherPage(mainPage);
         });
 
@@ -1690,13 +2379,21 @@
             if (!j) {
                 return '<div class="podium-place podium-place-' + rang + ' podium-place-vide"></div>';
             }
-            const medaille = rang === 1 ? '🥇' : rang === 2 ? '🥈' : '🥉';
+            const medaille = rang === 1 ? '🥇' : rang === 2 ? '🥈' : rang === 3 ? '🥉' : '';
             const victoiresGlobales = typeof j.victoiresGlobales !== 'undefined' ? j.victoiresGlobales : j.victoires;
+            // En classement global, le chiffre mis en avant est le score
+            // (victoires + participations) pour que tous les joueurs actifs
+            // progressent, pas seulement ceux qui ont déjà gagné. En classement
+            // mensuel, on garde les victoires du mois (c'est un podium de
+            // performance, pas de participation).
+            const valeurPrincipale = classementMode === 'global'
+                ? '⭐ ' + (typeof j.score !== 'undefined' ? j.score : calculerScoreJoueur(j)) + ' pts'
+                : '🏆 ' + (j.victoires || 0);
             return '<div class="podium-place podium-place-' + rang + '">' +
                 '<div class="podium-medaille">' + medaille + '</div>' +
                 '<div class="podium-avatar">' + echapperHTML(j.avatar || '🙂') + '</div>' +
                 '<div class="podium-nom">' + echapperHTML(j.name || 'Joueur') + '</div>' +
-                '<div class="podium-victoires">🏆 ' + (j.victoires || 0) + '</div>' +
+                '<div class="podium-victoires">' + valeurPrincipale + '</div>' +
                 genererBadgeTitreHTML(victoiresGlobales, true) +
             '</div>';
         }
@@ -1719,7 +2416,7 @@
             if (donnees.length === 0) {
                 classementPodium.innerHTML = '';
                 classementList.innerHTML = '<p style="text-align:center;">' +
-                    (classementMode === 'global' ? 'Aucune victoire enregistrée pour le moment.' : 'Aucune victoire enregistrée ce mois-ci.') +
+                    (classementMode === 'global' ? 'Aucun tournoi joué pour le moment.' : 'Aucune victoire enregistrée ce mois-ci.') +
                     '</p>';
                 classementVoirPlusBtn.classList.add('hidden');
                 return;
@@ -1739,6 +2436,9 @@
             classementList.innerHTML = joueursAffiches.map(function (j, index) {
                 const rang = index + 4;
                 const victoiresGlobales = typeof j.victoiresGlobales !== 'undefined' ? j.victoiresGlobales : j.victoires;
+                const valeurPrincipale = classementMode === 'global'
+                    ? '⭐ ' + (typeof j.score !== 'undefined' ? j.score : calculerScoreJoueur(j)) + ' pts'
+                    : '🏆 ' + (j.victoires || 0);
                 return '<div class="classement-ligne">' +
                     '<span class="classement-rang">#' + rang + '</span>' +
                     '<span class="classement-avatar">' + echapperHTML(j.avatar || '🙂') + '</span>' +
@@ -1746,7 +2446,7 @@
                         '<span class="classement-nom">' + echapperHTML(j.name || 'Joueur') + '</span>' +
                         genererBadgeTitreHTML(victoiresGlobales, true) +
                     '</span>' +
-                    '<span class="classement-victoires">🏆 ' + (j.victoires || 0) + '</span>' +
+                    '<span class="classement-victoires">' + valeurPrincipale + '</span>' +
                 '</div>';
             }).join('');
 
@@ -1775,11 +2475,17 @@
 
             Object.keys(tournoisData).forEach(function (key) {
                 const t = tournoisData[key];
-                if (!t.vainqueurUid || !t.date) return;
+                // vainqueurUids liste TOUS les membres de l'équipe gagnante (fallback
+                // sur vainqueurUid seul pour les tournois clôturés avant l'ajout de ce
+                // champ) : chaque coéquipier doit être crédité, pas un seul représentant.
+                const gagnants = t.vainqueurUids || (t.vainqueurUid ? [t.vainqueurUid] : []);
+                if (gagnants.length === 0 || !t.date) return;
                 const d = new Date(t.date + 'T00:00:00');
                 if (isNaN(d.getTime())) return;
                 if (d.getMonth() === moisActuel && d.getFullYear() === anneeActuelle) {
-                    compteurs[t.vainqueurUid] = (compteurs[t.vainqueurUid] || 0) + 1;
+                    gagnants.forEach(function (uid) {
+                        compteurs[uid] = (compteurs[uid] || 0) + 1;
+                    });
                 }
             });
 
@@ -1805,8 +2511,16 @@
 
                     classementGlobalTries = Object.keys(joueursData)
                         .map(function (key) { return Object.assign({ uid: key }, joueursData[key]); })
-                        .filter(function (j) { return (j.victoires || 0) > 0; })
-                        .sort(function (a, b) { return (b.victoires || 0) - (a.victoires || 0); });
+                        // Inclut tout joueur ayant réellement joué au moins un tournoi
+                        // (et pas seulement ceux qui ont déjà gagné), pour que la
+                        // participation seule fasse progresser son score/classement.
+                        .filter(function (j) { return (j.tournoisJoues || 0) > 0; })
+                        .map(function (j) { return Object.assign({}, j, { score: calculerScoreJoueur(j) }); })
+                        .sort(function (a, b) {
+                            if (b.score !== a.score) return b.score - a.score;
+                            if ((b.victoires || 0) !== (a.victoires || 0)) return (b.victoires || 0) - (a.victoires || 0);
+                            return (b.tournoisJoues || 0) - (a.tournoisJoues || 0);
+                        });
 
                     classementMensuelTries = calculerClassementMensuel(tournoisData, joueursData);
 
@@ -1869,7 +2583,7 @@
                     if (aVenir.length === 0) {
                         accueilTournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
                     } else {
-                        accueilTournoisList.innerHTML = aVenir.map(function (t) { return genererCarteTournoiHTML(t, false); }).join('');
+                        accueilTournoisList.innerHTML = genererCalendrierTournoisHTML(aVenir, false);
                     }
 
                     // La carte bracket est affichée pour tous les tournois (à venir et terminés)
@@ -1882,6 +2596,7 @@
                         accueilBracketList.innerHTML = '<p style="text-align:center;">Aucun tournoi pour le moment.</p>';
                     } else {
                         accueilBracketList.innerHTML = tousTries.map(function (t) { return genererCarteBracketHTML(t); }).join('');
+                        dessinerTousLesConnecteursBracket(accueilBracketList);
                     }
                 })
                 .catch(function (error) {
@@ -2058,6 +2773,127 @@
                 });
         }
 
+        // --- Page Amis / Abonnements ---
+        const amisTabAmisBtn = document.getElementById('amis-tab-amis-btn');
+        const amisTabSuivisBtn = document.getElementById('amis-tab-suivis-btn');
+        const amisListeAmisEl = document.getElementById('amis-liste-amis');
+        const amisListeSuivisEl = document.getElementById('amis-liste-suivis');
+
+        function activerOngletAmis(onglet) {
+            const surAmis = onglet === 'amis';
+            amisTabAmisBtn.classList.toggle('active', surAmis);
+            amisTabSuivisBtn.classList.toggle('active', !surAmis);
+            amisListeAmisEl.classList.toggle('hidden', !surAmis);
+            amisListeSuivisEl.classList.toggle('hidden', surAmis);
+            if (surAmis) {
+                afficherListeAmis();
+            } else {
+                afficherListeSuivis();
+            }
+        }
+
+        amisTabAmisBtn.addEventListener('click', function () { activerOngletAmis('amis'); });
+        amisTabSuivisBtn.addEventListener('click', function () { activerOngletAmis('suivis'); });
+
+        function genererCarteAmiHTML(uid, infos, typeListe) {
+            const nom = echapperHTML(infos.name || 'Joueur');
+            const boutonTexte = typeListe === 'amis' ? '❌ Retirer' : '➖ Ne plus suivre';
+            const boutonClasse = typeListe === 'amis' ? 'ami-retirer-btn' : 'suivi-retirer-btn';
+            return '<div class="amis-card" data-uid="' + echapperHTML(uid) + '">' +
+                '<div class="infos"><h4>' + nom + '</h4><p>Voir le profil</p></div>' +
+                '<button type="button" class="' + boutonClasse + '" data-uid="' + echapperHTML(uid) + '">' + boutonTexte + '</button>' +
+                '</div>';
+        }
+
+        function afficherListeAmis() {
+            if (!window.currentUser) return;
+            amisListeAmisEl.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+            amisRef.child(window.currentUser.uid).once('value')
+                .then(function (snap) {
+                    const data = snap.val() || {};
+                    const uids = Object.keys(data);
+                    if (uids.length === 0) {
+                        amisListeAmisEl.innerHTML = '<p style="text-align:center;">Tu n\'as pas encore d\'amis. Trouve des joueurs depuis la recherche sur l\'Accueil !</p>';
+                        return;
+                    }
+                    amisListeAmisEl.innerHTML = uids
+                        .sort(function (a, b) { return (data[b].since || 0) - (data[a].since || 0); })
+                        .map(function (uid) { return genererCarteAmiHTML(uid, data[uid], 'amis'); })
+                        .join('');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    amisListeAmisEl.innerHTML = '<p style="text-align:center;">Erreur de chargement.</p>';
+                });
+        }
+
+        function afficherListeSuivis() {
+            if (!window.currentUser) return;
+            amisListeSuivisEl.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+            suivisRef.child(window.currentUser.uid).once('value')
+                .then(function (snap) {
+                    const data = snap.val() || {};
+                    const uids = Object.keys(data);
+                    if (uids.length === 0) {
+                        amisListeSuivisEl.innerHTML = '<p style="text-align:center;">Tu ne suis encore aucun joueur.</p>';
+                        return;
+                    }
+                    amisListeSuivisEl.innerHTML = uids
+                        .sort(function (a, b) { return (data[b].since || 0) - (data[a].since || 0); })
+                        .map(function (uid) { return genererCarteAmiHTML(uid, data[uid], 'suivis'); })
+                        .join('');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    amisListeSuivisEl.innerHTML = '<p style="text-align:center;">Erreur de chargement.</p>';
+                });
+        }
+
+        function retirerAmi(autreUid) {
+            if (!window.currentUser) return;
+            const maj = {};
+            maj['amis/' + window.currentUser.uid + '/' + autreUid] = null;
+            maj['amis/' + autreUid + '/' + window.currentUser.uid] = null;
+            return db.ref().update(maj);
+        }
+
+        function neplusSuivre(autreUid) {
+            if (!window.currentUser) return Promise.resolve();
+            return suivisRef.child(window.currentUser.uid).child(autreUid).remove();
+        }
+
+        [amisListeAmisEl, amisListeSuivisEl].forEach(function (liste) {
+            liste.addEventListener('click', function (e) {
+                const retirerBtn = e.target.closest('.ami-retirer-btn');
+                if (retirerBtn) {
+                    if (!confirm('Retirer ce joueur de tes amis ?')) return;
+                    retirerAmi(retirerBtn.dataset.uid)
+                        .then(afficherListeAmis)
+                        .catch(function (error) {
+                            console.error('Erreur Firebase :', error);
+                            alert('Impossible de retirer cet ami : ' + error.message);
+                        });
+                    return;
+                }
+                const suiviBtn = e.target.closest('.suivi-retirer-btn');
+                if (suiviBtn) {
+                    neplusSuivre(suiviBtn.dataset.uid)
+                        .then(afficherListeSuivis)
+                        .catch(function (error) {
+                            console.error('Erreur Firebase :', error);
+                            alert("Impossible de retirer cet abonnement : " + error.message);
+                        });
+                    return;
+                }
+                const carte = e.target.closest('.amis-card');
+                if (carte) {
+                    afficherProfil(carte.dataset.uid);
+                }
+            });
+        });
+
         const messagesListeView = document.getElementById('messages-liste-view');
         const messagesChatView = document.getElementById('messages-chat-view');
         const messagesTournoisList = document.getElementById('messages-tournois-list');
@@ -2071,14 +2907,23 @@
         const profilNomEl = document.getElementById('profil-nom');
         const profilDetailsEl = document.getElementById('profil-details');
         const profilAvatarEl = document.getElementById('profil-avatar');
+        const profilBioEl = document.getElementById('profil-bio');
+        const profilFollowRowEl = document.getElementById('profil-follow-row');
+        const profilAmiBtn = document.getElementById('profil-ami-btn');
+        const profilSuivreBtn = document.getElementById('profil-suivre-btn');
         const profilFermerBtn = document.getElementById('profil-fermer-btn');
+        let profilUidActuel = null; // uid du profil actuellement affiché dans l'overlay
 
         function afficherProfil(uid) {
             if (!uid) return;
 
+            profilUidActuel = uid;
             profilNomEl.textContent = 'Chargement...';
             profilDetailsEl.textContent = '';
             profilAvatarEl.textContent = '';
+            profilBioEl.textContent = '';
+            profilBioEl.classList.add('hidden');
+            profilFollowRowEl.classList.add('hidden');
             profilOverlay.classList.remove('hidden');
 
             joueursRef.child(uid).once('value')
@@ -2096,7 +2941,9 @@
                     const details = [
                         j.tag ? '#' + j.tag.replace(/^#/, '') : null,
                         j.identifiant ? 'Identifiant : ' + j.identifiant : null,
-                        (typeof j.trophies !== 'undefined' && j.trophies !== '') ? '🏆 ' + j.trophies + ' trophées' : null
+                        (typeof j.trophies !== 'undefined' && j.trophies !== '') ? '🏆 ' + j.trophies + ' trophées' : null,
+                        j.brawlerFavori ? '⭐ Brawler favori : ' + j.brawlerFavori : null,
+                        j.meilleurClassement ? '📈 Meilleur classement : ' + j.meilleurClassement : null
                     ].filter(Boolean);
 
                     const tournoisJoues = j.tournoisJoues || 0;
@@ -2119,6 +2966,40 @@
                                 'Taux de victoire' +
                             '</div>' +
                         '</div>';
+
+                    if (j.bio) {
+                        profilBioEl.textContent = j.bio;
+                        profilBioEl.classList.remove('hidden');
+                    }
+
+                    // Boutons ami / suivre : cachés si c'est mon propre profil ou si pas connecté
+                    if (window.currentUser && window.currentUser.uid !== uid) {
+                        profilFollowRowEl.classList.remove('hidden');
+                        profilAmiBtn.disabled = false;
+                        profilSuivreBtn.disabled = false;
+                        profilAmiBtn.textContent = '🤝 Ajouter en ami';
+                        profilAmiBtn.classList.remove('actif');
+                        profilSuivreBtn.textContent = '➕ Suivre';
+                        profilSuivreBtn.classList.remove('actif');
+
+                        Promise.all([
+                            amisRef.child(window.currentUser.uid).child(uid).once('value'),
+                            suivisRef.child(window.currentUser.uid).child(uid).once('value')
+                        ]).then(function (resultats) {
+                            if (resultats[0].exists()) {
+                                profilAmiBtn.textContent = 'Ami ✓';
+                                profilAmiBtn.classList.add('actif');
+                            }
+                            if (resultats[1].exists()) {
+                                profilSuivreBtn.textContent = 'Suivi ✓';
+                                profilSuivreBtn.classList.add('actif');
+                            }
+                        }).catch(function (error) {
+                            console.error('Erreur Firebase :', error);
+                        });
+                    } else {
+                        profilFollowRowEl.classList.add('hidden');
+                    }
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
@@ -2126,10 +3007,148 @@
                 });
         }
 
+        let reactionPickerOuvert = null; // élément DOM du picker actuellement affiché, s'il y en a un
+
+        function fermerReactionPicker() {
+            if (reactionPickerOuvert) {
+                reactionPickerOuvert.remove();
+                reactionPickerOuvert = null;
+            }
+        }
+
+        // Ajoute ou retire ma réaction (un emoji) sur un message donné, dans la
+        // conversation actuellement ouverte (groupe ou privée : conversationOuverteRef
+        // pointe dans les deux cas vers le conteneur des messages de cette conversation)
+        function basculerReaction(msgId, emoji) {
+            if (!window.currentUser || !conversationOuverteRef || !msgId) return;
+            const reactionRef = conversationOuverteRef.child(msgId).child('reactions').child(emoji).child(window.currentUser.uid);
+            reactionRef.once('value').then(function (snap) {
+                if (snap.exists()) {
+                    return reactionRef.remove();
+                }
+                return reactionRef.set(true);
+            }).catch(function (error) {
+                console.error('Erreur Firebase (réaction) :', error);
+            });
+        }
+
         chatMessagesEl.addEventListener('click', function (e) {
+            const chipEl = e.target.closest('.reaction-chip');
+            if (chipEl) {
+                fermerReactionPicker();
+                basculerReaction(chipEl.dataset.msgId, chipEl.dataset.emoji);
+                return;
+            }
+
+            const ajoutEl = e.target.closest('.reaction-add-btn');
+            if (ajoutEl) {
+                if (!window.currentUser) {
+                    alert("Connecte-toi d'abord (bouton Compte) pour réagir à un message.");
+                    return;
+                }
+                fermerReactionPicker();
+                const picker = document.createElement('div');
+                picker.className = 'reaction-picker';
+                picker.innerHTML = EMOJIS_REACTION.map(function (emoji) {
+                    return '<button type="button" data-msg-id="' + echapperHTML(ajoutEl.dataset.msgId) + '" data-emoji="' + echapperHTML(emoji) + '">' + emoji + '</button>';
+                }).join('');
+                document.body.appendChild(picker);
+                const rect = ajoutEl.getBoundingClientRect();
+                picker.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+                picker.style.left = Math.max(8, window.scrollX + rect.left - 60) + 'px';
+                reactionPickerOuvert = picker;
+                return;
+            }
+
             const nomEl = e.target.closest('.auteur-clickable');
-            if (!nomEl) return;
-            afficherProfil(nomEl.dataset.uid);
+            if (nomEl) {
+                afficherProfil(nomEl.dataset.uid);
+            }
+        });
+
+        // Choix d'un emoji dans le picker flottant (celui-ci est ajouté dynamiquement
+        // au <body>, donc on écoute au niveau document via délégation)
+        document.addEventListener('click', function (e) {
+            const emojiBtn = e.target.closest('.reaction-picker button');
+            if (emojiBtn) {
+                basculerReaction(emojiBtn.dataset.msgId, emojiBtn.dataset.emoji);
+                fermerReactionPicker();
+                return;
+            }
+            if (reactionPickerOuvert && !e.target.closest('.reaction-picker') && !e.target.closest('.reaction-add-btn')) {
+                fermerReactionPicker();
+            }
+        });
+
+        profilAmiBtn.addEventListener('click', function () {
+            if (!window.currentUser || !profilUidActuel) return;
+            if (profilAmiBtn.classList.contains('actif')) {
+                retirerAmi(profilUidActuel)
+                    .then(function () {
+                        profilAmiBtn.textContent = '🤝 Ajouter en ami';
+                        profilAmiBtn.classList.remove('actif');
+                    })
+                    .catch(function (error) {
+                        console.error('Erreur Firebase :', error);
+                        alert("Impossible de retirer cet ami : " + error.message);
+                    });
+                return;
+            }
+
+            profilAmiBtn.disabled = true;
+            joueursRef.child(profilUidActuel).once('value').then(function (snap) {
+                const joueur = snap.val();
+                if (!joueur) return;
+                const maintenant = firebase.database.ServerValue.TIMESTAMP;
+                const maj = {};
+                maj['amis/' + window.currentUser.uid + '/' + profilUidActuel] = { name: joueur.name || 'Joueur', since: maintenant };
+                maj['amis/' + profilUidActuel + '/' + window.currentUser.uid] = { name: window.currentUser.name || window.currentUser.email || 'Joueur', since: maintenant };
+                return db.ref().update(maj);
+            }).then(function () {
+                profilAmiBtn.textContent = 'Ami ✓';
+                profilAmiBtn.classList.add('actif');
+            }).catch(function (error) {
+                console.error('Erreur Firebase :', error);
+                alert("Impossible d'ajouter cet ami : " + error.message);
+            }).finally(function () {
+                profilAmiBtn.disabled = false;
+            });
+        });
+
+        profilSuivreBtn.addEventListener('click', function () {
+            if (!window.currentUser || !profilUidActuel) return;
+            if (profilSuivreBtn.classList.contains('actif')) {
+                neplusSuivre(profilUidActuel)
+                    .then(function () {
+                        profilSuivreBtn.textContent = '➕ Suivre';
+                        profilSuivreBtn.classList.remove('actif');
+                    })
+                    .catch(function (error) {
+                        console.error('Erreur Firebase :', error);
+                        alert("Impossible de ne plus suivre ce joueur : " + error.message);
+                    });
+                return;
+            }
+
+            profilSuivreBtn.disabled = true;
+            joueursRef.child(profilUidActuel).once('value').then(function (snap) {
+                const joueur = snap.val();
+                if (!joueur) return;
+                return suivisRef.child(window.currentUser.uid).child(profilUidActuel).set({
+                    name: joueur.name || 'Joueur',
+                    since: firebase.database.ServerValue.TIMESTAMP
+                });
+            }).then(function () {
+                profilSuivreBtn.textContent = 'Suivi ✓';
+                profilSuivreBtn.classList.add('actif');
+                // Notifie le joueur suivi (visible dans sa boîte de réception)
+                envoyerNotification(profilUidActuel, (window.currentUser.name || 'Un joueur') + ' a commencé à te suivre.', 'info');
+            }).catch(function (error) {
+                console.error('Erreur Firebase :', error);
+                alert("Impossible de suivre ce joueur : " + error.message);
+            }).finally(function () {
+                profilSuivreBtn.disabled = false;
+            });
         });
 
         profilFermerBtn.addEventListener('click', function () {
@@ -2165,13 +3184,38 @@
             return div.innerHTML;
         }
 
+        // Paliers de badges cosmétiques débloqués selon le nombre total de victoires.
+        // Classés du plus haut au plus bas : le premier palier atteint est retenu.
+        const PALIERS_BADGES = [
+            { seuil: 50, label: 'Mythique', emoji: '🌌', classe: 'badge-mythique' },
+            { seuil: 25, label: 'Champion', emoji: '🏆', classe: 'badge-champion' },
+            { seuil: 15, label: 'Maître', emoji: '💎', classe: 'badge-maitre' },
+            { seuil: 10, label: 'Légende', emoji: '👑', classe: 'badge-legende' },
+            { seuil: 5, label: 'Vétéran', emoji: '🎖️', classe: 'badge-veteran' },
+            { seuil: 3, label: 'Confirmé', emoji: '🥈', classe: 'badge-confirme' },
+            { seuil: 1, label: 'Recrue', emoji: '🥉', classe: 'badge-recrue' }
+        ];
+
         // Détermine le badge/titre débloqué par un joueur selon son nombre total
         // de victoires (toujours calculé sur le total "de toujours", même si le
         // badge est affiché dans un contexte de classement mensuel).
         function obtenirBadgeJoueur(victoiresTotales) {
             victoiresTotales = victoiresTotales || 0;
-            if (victoiresTotales >= 10) return { label: 'Légende', emoji: '👑', classe: 'badge-legende' };
-            if (victoiresTotales >= 5) return { label: 'Vétéran', emoji: '🎖️', classe: 'badge-veteran' };
+            for (let i = 0; i < PALIERS_BADGES.length; i++) {
+                if (victoiresTotales >= PALIERS_BADGES[i].seuil) return PALIERS_BADGES[i];
+            }
+            return null;
+        }
+
+        // Renvoie le prochain palier non encore débloqué et le nombre de
+        // victoires qu'il manque, ou null si le joueur a atteint le palier max.
+        function obtenirProchainPalierBadge(victoiresTotales) {
+            victoiresTotales = victoiresTotales || 0;
+            for (let i = PALIERS_BADGES.length - 1; i >= 0; i--) {
+                if (victoiresTotales < PALIERS_BADGES[i].seuil) {
+                    return { palier: PALIERS_BADGES[i], manquant: PALIERS_BADGES[i].seuil - victoiresTotales };
+                }
+            }
             return null;
         }
 
@@ -2189,6 +3233,14 @@
             tournoisJoues = tournoisJoues || 0;
             if (tournoisJoues <= 0) return 0;
             return Math.round((victoires / tournoisJoues) * 100);
+        }
+
+        // Score du classement global : les victoires comptent plus (x3), mais
+        // CHAQUE tournoi joué fait progresser le score, même sans victoire.
+        // Ça évite qu'un joueur qui participe beaucoup mais ne gagne jamais
+        // n'ait aucun score qui bouge et disparaisse totalement du classement.
+        function calculerScoreJoueur(j) {
+            return (j.victoires || 0) * 3 + (j.tournoisJoues || 0);
         }
 
         // Transforme un pseudo en clé Firebase valide (les clés ne peuvent pas contenir . # $ [ ] /)
@@ -2390,7 +3442,7 @@
             conversationOuverteRef.on('value', function (msgSnap) {
                 const data = msgSnap.val() || {};
                 const messages = Object.keys(data)
-                    .map(function (key) { return data[key]; })
+                    .map(function (key) { return Object.assign({ id: key }, data[key]); })
                     .sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
                 chatMessagesEl.innerHTML = genererMessagesHTML(messages, monUid);
@@ -2434,7 +3486,7 @@
                     conversationOuverteRef.on('value', function (msgSnap) {
                         const data = msgSnap.val() || {};
                         const messages = Object.keys(data)
-                            .map(function (key) { return data[key]; })
+                            .map(function (key) { return Object.assign({ id: key }, data[key]); })
                             .sort(function (a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
 
                         chatMessagesEl.innerHTML = genererMessagesHTML(messages, monUid);
@@ -2536,11 +3588,34 @@
                 badgeEl.className = 'joueur-badge-titre hidden';
             }
 
+            const prochainBadgeEl = document.getElementById('account-prochain-badge');
+            if (prochainBadgeEl) {
+                const prochain = obtenirProchainPalierBadge(victoires);
+                prochainBadgeEl.textContent = prochain
+                    ? 'Encore ' + prochain.manquant + ' victoire' + (prochain.manquant > 1 ? 's' : '') + ' pour débloquer ' + prochain.palier.emoji + ' ' + prochain.palier.label
+                    : '';
+            }
+
             const tagEl = document.getElementById('account-tag');
             tagEl.innerHTML = '<strong>Tag Supercell (#) :</strong> ' + (user.tag ? echapperHTML(user.tag) : 'Non renseigné');
 
             const identifiantEl = document.getElementById('account-identifiant');
             identifiantEl.innerHTML = '<strong>Identifiant Supercell :</strong> ' + (user.identifiant ? echapperHTML(user.identifiant) : 'Non renseigné');
+
+            const brawlerEl = document.getElementById('account-brawler-favori');
+            brawlerEl.innerHTML = '<strong>Brawler favori :</strong> ' + (user.brawlerFavori ? echapperHTML(user.brawlerFavori) : 'Non renseigné');
+
+            const classementEl = document.getElementById('account-meilleur-classement');
+            classementEl.innerHTML = '<strong>Meilleur classement :</strong> ' + (user.meilleurClassement ? echapperHTML(user.meilleurClassement) : 'Non renseigné');
+
+            const bioEl = document.getElementById('account-bio');
+            if (user.bio) {
+                bioEl.textContent = user.bio;
+                bioEl.classList.remove('hidden');
+            } else {
+                bioEl.textContent = '';
+                bioEl.classList.add('hidden');
+            }
 
             const bannierEl = document.getElementById('account-email-non-verifie');
             bannierEl.classList.toggle('hidden', !!user.emailVerified);
@@ -2575,6 +3650,9 @@
         const parametresTagInput = document.getElementById('parametres-tag');
         const parametresIdentifiantInput = document.getElementById('parametres-identifiant');
         const parametresAvatarInput = document.getElementById('parametres-avatar');
+        const parametresBrawlerFavoriInput = document.getElementById('parametres-brawler-favori');
+        const parametresMeilleurClassementInput = document.getElementById('parametres-meilleur-classement');
+        const parametresBioInput = document.getElementById('parametres-bio');
         const parametresSaveBtn = document.getElementById('parametres-save-btn');
         const parametresAnnulerBtn = document.getElementById('parametres-annuler-btn');
         const parametresErreur = document.getElementById('parametres-erreur');
@@ -2587,6 +3665,9 @@
             parametresTrophiesInput.value = window.currentUser.trophies || '';
             parametresTagInput.value = window.currentUser.tag || '';
             parametresIdentifiantInput.value = window.currentUser.identifiant || '';
+            parametresBrawlerFavoriInput.value = window.currentUser.brawlerFavori || '';
+            parametresMeilleurClassementInput.value = window.currentUser.meilleurClassement || '';
+            parametresBioInput.value = window.currentUser.bio || '';
             remplirSelectAvatars(parametresAvatarInput, window.currentUser.avatar || AVATARS_DISPONIBLES[0]);
             parametresOverlay.classList.remove('hidden');
         });
@@ -2603,6 +3684,9 @@
             const tag = parametresTagInput.value.trim();
             const identifiant = parametresIdentifiantInput.value.trim();
             const avatar = parametresAvatarInput.value || AVATARS_DISPONIBLES[0];
+            const brawlerFavori = parametresBrawlerFavoriInput.value.trim();
+            const meilleurClassement = parametresMeilleurClassementInput.value.trim();
+            const bio = parametresBioInput.value.trim();
 
             if (!name || !trophies) {
                 parametresErreur.textContent = 'Merci de remplir au moins le nom et les trophées.';
@@ -2628,7 +3712,10 @@
                     trophies: trophies,
                     tag: tag,
                     identifiant: identifiant,
-                    avatar: avatar
+                    avatar: avatar,
+                    brawlerFavori: brawlerFavori,
+                    meilleurClassement: meilleurClassement,
+                    bio: bio
                 }),
                 'écriture du profil privé (comptes/' + uid + ')'
             )
@@ -2660,16 +3747,18 @@
                             'écriture nouvel identifiant (pseudos/' + cleanPseudoKey(identifiant) + ')'
                         ));
                     }
-                    // Met à jour l'annuaire public utilisé par la recherche et les profils
+                    // On utilise update() (et non set()) : joueurs/{uid} contient aussi
+                    // victoires et tournoisJoues (écrits par ajusterCompteur), qu'un set()
+                    // complet effacerait silencieusement à chaque modification de profil.
                     operations.push(etiqueterErreur(
-                        joueursRef.child(uid).set({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar }),
+                        joueursRef.child(uid).update({ name: name, tag: tag, identifiant: identifiant, trophies: trophies, avatar: avatar, brawlerFavori: brawlerFavori, meilleurClassement: meilleurClassement, bio: bio }),
                         'écriture annuaire public (joueurs/' + uid + ')'
                     ));
 
                     return Promise.all(operations);
                 })
                 .then(function () {
-                    window.currentUser = Object.assign({}, window.currentUser, { name, trophies, tag, identifiant, avatar });
+                    window.currentUser = Object.assign({}, window.currentUser, { name, trophies, tag, identifiant, avatar, brawlerFavori, meilleurClassement, bio });
                     remplirInfosCompte(window.currentUser);
                     parametresOverlay.classList.add('hidden');
                 })
@@ -2717,6 +3806,33 @@
 
         // Seul ce compte peut créer des tournois
         const ADMIN_EMAIL = 'bussierenoa@gmail.com';
+
+        // URL du webhook Discord : à créer dans Discord via
+        // Paramètres du salon → Intégrations → Webhooks → Nouveau webhook → Copier l'URL.
+        // Remplace la valeur ci-dessous par la vraie URL (garde-la secrète, ne la partage pas publiquement).
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1526332414715236484/8B-pGGC1CFqDjw_bJmOMNh2i5czkl7fDc20S0d5k2FqFVxyIgJ0VXTOiKk4PDtrB0zu8';
+
+        // Envoie une annonce dans Discord via le webhook. N'échoue jamais bruyamment
+        // côté utilisateur : si le webhook n'est pas configuré ou que la requête
+        // échoue, on se contente de logger l'erreur en console (best-effort).
+        function envoyerAnnonceDiscord(embed) {
+            if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.indexOf('REMPLACE_MOI') !== -1) {
+                console.warn('Webhook Discord non configuré : annonce non envoyée.');
+                return Promise.resolve();
+            }
+            return fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ embeds: [embed] })
+            }).catch(function (error) {
+                console.error('Erreur envoi webhook Discord :', error);
+            });
+        }
+        // Deep link : si l'URL contient ?tournoi=ID (lien partagé par un joueur),
+        // on mémorise l'ID pour amener directement l'utilisateur sur ce tournoi
+        // une fois la liste chargée (voir afficherTournois()).
+        let tournoiCibleDepuisLien = new URLSearchParams(window.location.search).get('tournoi');
+
         const tournoisRef = db.ref('tournois');
         const messagesRef = db.ref('messages'); // séparé de "tournois" pour pouvoir rendre les infos de tournoi publiques sans exposer les conversations
         const conversationsPriveesRef = db.ref('conversationsPrivees'); // conversationsPrivees/{monUid}/{autreUid} = { name, since, lastRead }
@@ -2865,6 +3981,67 @@
             });
         }
 
+        // ============================================================
+        // Rappels automatiques avant les tournois auxquels on est inscrit
+        // ------------------------------------------------------------
+        // Sans backend (Cloud Function), le rappel ne peut être déclenché que
+        // pendant que l'app est ouverte : on vérifie donc à la connexion, puis
+        // toutes les quelques minutes tant que la session reste active. Chaque
+        // rappel n'est envoyé qu'une seule fois par palier, grâce au drapeau
+        // stocké directement sur l'inscription (tournois/{id}/inscrits/{uid}/rappels).
+        // ============================================================
+        const RAPPEL_PALIERS = [
+            { cle: 'r24h', minutesAvant: 24 * 60, texte: 'commence demain' },
+            { cle: 'r1h', minutesAvant: 60, texte: 'commence dans moins d\'1h' }
+        ];
+        let intervalleRappelsAutomatiques = null;
+
+        function verifierRappelsAutomatiques() {
+            if (!window.currentUser) return;
+            const monUid = window.currentUser.uid;
+
+            tournoisRef.once('value').then(function (snapshot) {
+                const data = snapshot.val() || {};
+                const maintenant = new Date();
+
+                Object.keys(data).forEach(function (id) {
+                    const t = data[id];
+                    const inscrits = t.inscrits || {};
+                    const monInscription = inscrits[monUid];
+                    if (!monInscription) return;
+
+                    const debut = obtenirDateHeureTournoi(t);
+                    const minutesRestantes = (debut - maintenant) / 60000;
+                    if (minutesRestantes < 0) return; // tournoi déjà commencé : pas de rappel
+
+                    RAPPEL_PALIERS.forEach(function (palier) {
+                        const dejaEnvoye = monInscription.rappels && monInscription.rappels[palier.cle];
+                        if (dejaEnvoye || minutesRestantes > palier.minutesAvant) return;
+
+                        const quandTexte = t.date ? ' (' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + ')' : '';
+                        envoyerNotification(monUid, '⏰ Rappel : le tournoi "' + (t.nom || 'ce tournoi') + '" ' + palier.texte + quandTexte + '.', 'rappel');
+                        tournoisRef.child(id).child('inscrits').child(monUid).child('rappels').child(palier.cle).set(true)
+                            .catch(function (error) { console.error('Erreur enregistrement rappel :', error); });
+                    });
+                });
+            }).catch(function (error) {
+                console.error('Erreur vérification des rappels automatiques :', error);
+            });
+        }
+
+        function demarrerRappelsAutomatiques() {
+            arreterRappelsAutomatiques();
+            // Vérification toutes les 5 minutes tant que l'app reste ouverte
+            intervalleRappelsAutomatiques = setInterval(verifierRappelsAutomatiques, 5 * 60 * 1000);
+        }
+
+        function arreterRappelsAutomatiques() {
+            if (intervalleRappelsAutomatiques) {
+                clearInterval(intervalleRappelsAutomatiques);
+                intervalleRappelsAutomatiques = null;
+            }
+        }
+
 
         const ICONES_NOTIFICATION = {
             inscription: '✅',
@@ -2872,6 +4049,9 @@
             resultat: '🏆',
             excuse: '😔',
             'admin-exclusion': '⚠️',
+            'equipe-aleatoire': '🎲',
+            match: '⚔️',
+            bye: '⏭️',
             info: '🔔'
         };
 
@@ -2925,6 +4105,17 @@
             }
         }
 
+        const equipeOverlay = document.getElementById('equipe-overlay');
+        const equipeInfo = document.getElementById('equipe-info');
+        const equipeListe = document.getElementById('equipe-liste');
+        const equipeNomInput = document.getElementById('equipe-nom-input');
+        const equipeCreerBtn = document.getElementById('equipe-creer-btn');
+        const equipeAnnulerBtn = document.getElementById('equipe-annuler-btn');
+        const equipeErreur = document.getElementById('equipe-erreur');
+
+        // Garde l'état du tournoi pour lequel la fenêtre de choix d'équipe est ouverte
+        let equipeModalContexte = null;
+
         const tournoisPage = document.getElementById('tournois-page');
         const tournoisBtn = document.getElementById('tournois-btn');
         const tournoisList = document.getElementById('tournois-list');
@@ -2936,6 +4127,7 @@
         const tDateInput = document.getElementById('t-date');
         const tHeureInput = document.getElementById('t-heure');
         const tParticipantsInput = document.getElementById('t-participants');
+        const tDescriptionInput = document.getElementById('t-description');
 
         // Les choix de nombre de participants dépendent du mode de tournoi
         const optionsParticipants = {
@@ -2966,6 +4158,42 @@
             return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
         }
 
+        // Renvoie un libellé relatif et lisible pour une date de tournoi
+        // ("Aujourd'hui", "Demain", "Dans 4 jours", ou la date complète au-delà).
+        function libelleRelatifDate(dateStr) {
+            const jour = new Date(dateStr + 'T00:00:00');
+            const aujourdhui = new Date();
+            aujourdhui.setHours(0, 0, 0, 0);
+            const diffJours = Math.round((jour - aujourdhui) / 86400000);
+
+            if (diffJours === 0) return "🔴 Aujourd'hui";
+            if (diffJours === 1) return '🟠 Demain';
+            if (diffJours > 1 && diffJours <= 6) {
+                return '🗓️ ' + jour.toLocaleDateString('fr-FR', { weekday: 'long' }).replace(/^./, function (c) { return c.toUpperCase(); }) + ' (dans ' + diffJours + ' jours)';
+            }
+            return '🗓️ ' + formatDate(dateStr);
+        }
+
+        // Regroupe une liste de tournois triée par date en un "calendrier" agenda :
+        // un en-tête de jour relatif ("Aujourd'hui", "Demain"...) suivi des cartes
+        // des tournois de ce jour-là, plutôt qu'une simple liste plate.
+        function genererCalendrierTournoisHTML(tournoisAVenir, afficherSupprimer) {
+            if (tournoisAVenir.length === 0) return '';
+
+            let html = '';
+            let dateGroupeActuelle = null;
+
+            tournoisAVenir.forEach(function (t) {
+                if (t.date !== dateGroupeActuelle) {
+                    dateGroupeActuelle = t.date;
+                    html += '<div class="calendrier-jour-entete">' + libelleRelatifDate(t.date) + '</div>';
+                }
+                html += genererCarteTournoiHTML(t, afficherSupprimer);
+            });
+
+            return html;
+        }
+
         // Formate un timestamp Firebase (ms) en heure lisible (ex: 14:37)
         function formatHeureMessage(timestamp) {
             if (!timestamp) return '';
@@ -2975,6 +4203,25 @@
 
         // Génère le HTML de la liste des messages d'une conversation (groupe ou privée),
         // avec l'auteur (cliquable), le texte et l'horodatage
+        // Emojis proposés pour réagir à un message
+        const EMOJIS_REACTION = ['👍', '❤️', '😂', '🔥', '😮', '😢'];
+
+        function genererReactionsHTML(msgId, reactions, monUid) {
+            const r = reactions || {};
+            const chips = Object.keys(r).filter(function (emoji) {
+                return r[emoji] && Object.keys(r[emoji]).length > 0;
+            }).map(function (emoji) {
+                const uids = Object.keys(r[emoji]);
+                const mienne = monUid && r[emoji][monUid];
+                return '<button type="button" class="reaction-chip' + (mienne ? ' mienne' : '') + '" data-msg-id="' + echapperHTML(msgId) + '" data-emoji="' + echapperHTML(emoji) + '">' +
+                    emoji + ' ' + uids.length +
+                    '</button>';
+            }).join('');
+            return '<div class="reactions-row">' + chips +
+                '<button type="button" class="reaction-add-btn" data-msg-id="' + echapperHTML(msgId) + '">➕</button>' +
+                '</div>';
+        }
+
         function genererMessagesHTML(messages, monUid) {
             if (messages.length === 0) {
                 return '<p style="text-align:center; color:#777;">Aucun message pour l\'instant. Sois le premier à écrire !</p>';
@@ -2985,12 +4232,19 @@
                     '<div class="auteur auteur-clickable" data-uid="' + echapperHTML(m.uid || '') + '">' + (m.avatar ? echapperHTML(m.avatar) + ' ' : '') + echapperHTML(m.auteur || 'Anonyme') + '</div>' +
                     '<div class="texte">' + echapperHTML(m.texte || '') + '</div>' +
                     '<span class="horodatage">' + formatHeureMessage(m.timestamp) + '</span>' +
+                    genererReactionsHTML(m.id, m.reactions, monUid) +
                     '</div>';
             }).join('');
         }
 
         // Génère le HTML d'une carte de tournoi (réutilisé sur la page Accueil et sur la page Tournois)
         // afficherSupprimer : n'affiche le bouton de suppression admin que sur la page Tournois
+
+        // Utilisé par le système de rappels automatiques pour connaître l'heure de début d'un tournoi
+        function obtenirDateHeureTournoi(t) {
+            return new Date(t.date + 'T' + (t.heure || '00:00'));
+        }
+
         function genererCarteTournoiHTML(t, afficherSupprimer) {
             const inscrits = t.inscrits || {};
             const nbInscrits = Object.keys(inscrits).length;
@@ -3007,12 +4261,15 @@
                 texteBouton = 'Complet';
             }
 
-            return '<div class="tournoi-card">' +
+            return '<div class="tournoi-card" id="tournoi-card-' + echapperHTML(t.id) + '">' +
                 '<h3>' + echapperHTML(t.nom) + '</h3>' +
                 '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + echapperHTML(t.heure) : '') + '</p>' +
                 '<p>👥 ' + nbInscrits + ' / ' + t.participants + ' participants</p>' +
+                (t.description ? '<p style="margin-top:0.3rem; white-space:pre-line;">📝 ' + echapperHTML(t.description) + '</p>' : '') +
+                (dejaInscrit && dejaInscrit.equipe ? '<p>🛡️ Ton équipe : ' + echapperHTML(dejaInscrit.equipe) + '</p>' : '') +
                 '<button type="button" class="' + classeBouton + '" data-id="' + echapperHTML(t.id) + '"' +
                     (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
+                '<button type="button" class="partager-btn" data-id="' + echapperHTML(t.id) + '" data-nom="' + echapperHTML(t.nom) + '">🔗 Partager à des amis</button>' +
                 (afficherSupprimer && estAdmin()
                     ? '<button type="button" class="tirage-btn" data-id="' + echapperHTML(t.id) + '">🎲 Tirer au sort le 1er tour</button>'
                     : '') +
@@ -3035,6 +4292,70 @@
 
         function tailleEquipeDuTournoi(nomTournoi) {
             return TAILLE_EQUIPE_PAR_TYPE[nomTournoi] || 1;
+        }
+
+        // Nettoie un nom d'équipe saisi par un joueur : espaces de début/fin
+        // enlevés, espaces internes multiples réduits à un seul.
+        function nettoyerNomEquipe(nom) {
+            return (nom || '').trim().replace(/\s+/g, ' ');
+        }
+
+        // Clé de comparaison "insensible" pour un nom d'équipe : même nom nettoyé,
+        // en minuscules. Sert à regrouper/reconnaître une équipe indépendamment
+        // de la casse ou des espaces utilisés par chaque joueur ("Team A",
+        // "team a" et " Team A " doivent être vus comme la même équipe).
+        function cleNomEquipe(nom) {
+            return nettoyerNomEquipe(nom).toLowerCase();
+        }
+
+        // Regroupe les inscrits d'un tournoi selon l'équipe qu'ils ont choisie à
+        // l'inscription (champ "equipe" de chaque inscrit), au lieu de former des
+        // équipes aléatoirement. Les joueurs sans équipe complète (équipe incomplète
+        // ou pas d'équipe renseignée) sont renvoyés à part, comme pour le mode aléatoire.
+        // Chaque joueur est représenté par { uid, name } (l'uid sert notamment à
+        // créditer la victoire quand une équipe gagne automatiquement, faute d'adversaire).
+        function formerEquipesDepuisChoix(inscrits, tailleEquipe) {
+            const groupes = {}; // clé normalisée -> { nom: nom affiché, membres: [...] }
+            const sansEquipe = [];
+
+            Object.keys(inscrits).forEach(function (uid) {
+                const insc = inscrits[uid] || {};
+                const nomEquipe = nettoyerNomEquipe(insc.equipe);
+                const joueur = { uid: uid, name: insc.name || 'Joueur', equipe: nomEquipe || null };
+                if (!nomEquipe) {
+                    sansEquipe.push(joueur);
+                    return;
+                }
+                // "Team A", "team a" et " Team A " sont la même équipe : on
+                // regroupe sur une clé normalisée pour éviter toute
+                // fragmentation accidentelle, tout en affichant le nom tel
+                // que saisi par le premier joueur à avoir rejoint l'équipe.
+                const cle = cleNomEquipe(nomEquipe);
+                if (!groupes[cle]) groupes[cle] = { nom: nomEquipe, membres: [] };
+                groupes[cle].membres.push(joueur);
+            });
+
+            const equipes = [];
+            Object.keys(groupes).forEach(function (cle) {
+                const groupe = groupes[cle];
+                const membres = groupe.membres;
+                if (membres.length >= tailleEquipe) {
+                    equipes.push({ nom: groupe.nom, membres: membres.slice(0, tailleEquipe) });
+                    membres.slice(tailleEquipe).forEach(function (j) { sansEquipe.push(j); });
+                } else {
+                    membres.forEach(function (j) { sansEquipe.push(j); });
+                }
+            });
+
+            return { equipes: equipes, sansEquipe: sansEquipe };
+        }
+
+        // Formate le texte d'affichage d'une équipe (ou d'un joueur solo) pour les
+        // messages de tirage au sort et les notifications : "Nom (Membre1 + Membre2)"
+        // si l'équipe a un nom, sinon juste "Membre1 + Membre2".
+        function formaterEntrantEquipe(equipe) {
+            const noms = equipe.membres.map(function (m) { return m.name; }).join(' + ');
+            return equipe.nom ? equipe.nom + ' (' + noms + ')' : noms;
         }
 
         // Mélange aléatoire générique (Fisher-Yates), utilisé à la fois pour former
@@ -3077,15 +4398,16 @@
             return { taille, nbByes, exemptes, matchs };
         }
 
-        // Regroupe une liste de joueurs individuels en équipes de taille donnée,
-        // en les mélangeant aléatoirement au préalable. Les joueurs en surnombre
-        // (qui ne forment pas une équipe complète) sont renvoyés à part.
-        function formerEquipesAleatoires(noms, tailleEquipe) {
+        // Regroupe une liste de joueurs individuels (objets { uid, name, ... }) en
+        // équipes de taille donnée, en les mélangeant aléatoirement au préalable.
+        // Les joueurs en surnombre (qui ne forment pas une équipe complète) sont
+        // renvoyés à part.
+        function formerEquipesAleatoires(joueurs, tailleEquipe) {
             if (tailleEquipe <= 1) {
-                return { equipes: noms.map(function (nom) { return [nom]; }), sansEquipe: [] };
+                return { equipes: joueurs.map(function (j) { return [j]; }), sansEquipe: [] };
             }
 
-            const melange = melangerAleatoirement(noms);
+            const melange = melangerAleatoirement(joueurs);
             const nbEquipesCompletes = Math.floor(melange.length / tailleEquipe);
             const nbJoueursUtilises = nbEquipesCompletes * tailleEquipe;
 
@@ -3098,12 +4420,90 @@
             return { equipes: equipes, sansEquipe: sansEquipe };
         }
 
+        // Quand un seul entrant (un joueur solo en 1v1, ou une équipe complète en
+        // 2v2/3v3) est inscrit au moment du tirage au sort, il n'y a personne à
+        // affronter : on le déclare vainqueur automatiquement (comme si l'admin
+        // avait renseigné le résultat à la main), on crédite la victoire au
+        // classement, et on prévient tous les membres concernés.
+        function declarerVainqueurUnique(tournoiId, t, equipeGagnante, texteEntrant, joueursExclus) {
+            const nomTournoi = t.nom || 'ce tournoi';
+            const membres = equipeGagnante.membres; // [{ uid, name, ... }]
+            const premierUid = membres[0] ? membres[0].uid : null;
+            // vainqueurUid reste le représentant (utilisé pour la présélection dans le
+            // menu admin), mais vainqueurUids liste TOUS les membres à créditer/retirer,
+            // pour que chaque coéquipier gagnant obtienne bien sa victoire (et pas
+            // seulement le premier membre de l'équipe).
+            const nouveauxUids = membres.map(function (m) { return m.uid; }).filter(Boolean);
+            const anciensUids = t.vainqueurUids || (t.vainqueurUid ? [t.vainqueurUid] : []);
+            // joueursExclus : les inscrits qui n'ont pas pu jouer faute d'équipe
+            // complète (ex : une équipe complète gagne automatiquement, mais des
+            // "restes" en trop n'ont pas pu former une 2e équipe). On les persiste
+            // dans exclusUids pour que traiterParticipationsTournoisTermines() sache
+            // qu'ils n'ont PAS joué, et ne leur crédite pas un tournoi joué.
+            const exclusUids = (joueursExclus || []).map(function (j) { return j.uid; }).filter(Boolean);
+
+            // Le message affiché distingue deux cas bien différents : soit
+            // l'équipe gagnante était VRAIMENT la seule inscrite, soit d'autres
+            // joueurs étaient bien inscrits mais n'étaient pas assez nombreux
+            // pour compléter une deuxième équipe (auquel cas dire "seul(e)
+            // inscrit(e)" serait trompeur : on les nomme à la place).
+            const texteResultat = (joueursExclus && joueursExclus.length > 0)
+                ? texteEntrant + ' remporte une victoire automatique : pas assez de joueurs pour former une équipe adverse complète (sans équipe complète : ' + joueursExclus.map(function (j) { return j.name; }).join(', ') + ').'
+                : texteEntrant + ' est seul(e) inscrit(e) : victoire automatique, faute d\'adversaire.';
+
+            return etiqueterErreur(
+                tournoisRef.child(tournoiId).update({
+                    premierTour: texteResultat,
+                    vainqueur: texteEntrant,
+                    vainqueurUid: premierUid,
+                    vainqueurUids: nouveauxUids.length ? nouveauxUids : null,
+                    exclusUids: exclusUids.length ? exclusUids : null
+                }),
+                "écriture du résultat automatique sur le tournoi (tournois/" + tournoiId + ")"
+            ).then(function () {
+                // On ne touche au compteur de victoires que pour les membres dont le
+                // statut a réellement changé par rapport au tirage précédent : sinon
+                // (ex : l'admin relance deux fois le tirage sur la même équipe seule
+                // inscrite), on éviterait sinon de créditer deux fois la même
+                // victoire, ou de laisser une ancienne victoire orpheline si le
+                // vainqueur automatique a changé entre-temps.
+                const operations = ajusterVictoiresEquipe(anciensUids, nouveauxUids);
+
+                const texteFelicitations = membres.length > 1
+                    ? 'Personne d\'autre ne s\'est inscrit au tournoi "' + nomTournoi + '" : ton équipe remporte la victoire automatiquement. Félicitations !'
+                    : 'Personne d\'autre ne s\'est inscrit au tournoi "' + nomTournoi + '" : tu remportes la victoire automatiquement. Félicitations !';
+
+                membres.forEach(function (m) {
+                    operations.push(envoyerNotification(m.uid, texteFelicitations, 'resultat'));
+                });
+
+                return Promise.all(operations);
+            });
+        }
+
+        // Si un tirage précédent avait déclaré un vainqueur automatique (faute
+        // d'adversaire), et qu'on relance maintenant un tirage qui débouche sur
+        // autre chose (un vrai bracket, un match 1v1 exceptionnel, ou une
+        // annulation faute de joueurs), l'ancien résultat n'a plus lieu d'être :
+        // on retire la victoire créditée à tort et on efface le champ vainqueur,
+        // pour éviter qu'il reste affiché (et pré-sélectionné dans le menu de
+        // l'admin) comme si le nouveau tirage était déjà joué et gagné.
+        function annulerVictoireAutomatiqueObsolete(t) {
+            const anciensUids = t.vainqueurUids || (t.vainqueurUid ? [t.vainqueurUid] : []);
+            if (anciensUids.length === 0) {
+                return Promise.resolve();
+            }
+            return Promise.all(ajusterVictoiresEquipe(anciensUids, []));
+        }
+
         // Lance (ou relance) le tirage au sort du 1er tour d'un tournoi (admin uniquement),
         // quel que soit le type de tournoi (1v1, 2v2, 3v3, 3v3 mode aléatoire...) :
         // - pour un tournoi 1v1, chaque inscrit est un entrant.
-        // - pour un tournoi 2v2/3v3, les inscrits sont d'abord regroupés aléatoirement
-        //   en équipes complètes, et ce sont ces équipes qui deviennent les entrants.
-        // Le résultat lisible est enregistré dans le champ "premierTour" du tournoi.
+        // - pour un tournoi en équipe, les équipes choisies par les joueurs eux-mêmes
+        //   à l'inscription deviennent les entrants.
+        // S'il n'y a qu'un seul entrant complet (aucun adversaire), il est déclaré
+        // vainqueur automatiquement au lieu de générer un tirage. Le résultat lisible
+        // est sinon enregistré dans le champ "premierTour" du tournoi.
         function lancerTirageAuSort(tournoiId, rafraichir) {
             if (!estAdmin()) {
                 alert("Seul l'administrateur peut lancer le tirage au sort.");
@@ -3111,79 +4511,244 @@
             }
 
             let nomTournoiGlobal = '';
-            let inscritsGlobal = {};
 
             tournoisRef.child(tournoiId).once('value')
                 .then(function (snap) {
                     const t = snap.val() || {};
                     const inscrits = t.inscrits || {};
-                    inscritsGlobal = inscrits;
                     nomTournoiGlobal = t.nom || 'ce tournoi';
-                    const noms = Object.keys(inscrits).map(function (uid) { return inscrits[uid].name || 'Joueur'; });
                     const tailleEquipe = tailleEquipeDuTournoi(t.nom);
 
-                    if (noms.length < 2) {
-                        alert('Il faut au moins 2 inscrits pour lancer un tirage au sort.');
+                    if (Object.keys(inscrits).length === 0) {
+                        alert('Il faut au moins 1 inscrit pour lancer un tirage au sort.');
                         return null;
                     }
 
-                    const { equipes, sansEquipe } = formerEquipesAleatoires(noms, tailleEquipe);
-                    const entrants = equipes.map(function (equipe) { return equipe.join(' + '); });
+                    let equipes, sansEquipe;
+                    // Liste des équipes formées aléatoirement (fusion de joueurs seuls),
+                    // conservée à part pour prévenir individuellement chaque joueur
+                    // concerné de la composition de son équipe (voir plus bas).
+                    const equipesFormeesAleatoirement = [];
+                    if (tailleEquipe > 1) {
+                        // 1) Équipes explicitement choisies par les joueurs eux-mêmes à l'inscription
+                        const resultatChoix = formerEquipesDepuisChoix(inscrits, tailleEquipe);
+                        equipes = resultatChoix.equipes.slice();
 
-                    if (entrants.length < 2) {
+                        // 2) Les joueurs restants (équipe non choisie, ou incomplète) sont
+                        // regroupés aléatoirement en autant d'équipes complètes que possible,
+                        // MAIS seulement si cela garantit un vrai adversaire (au moins 2
+                        // équipes au total sur le tournoi). Sinon, on ne force pas des
+                        // inconnus à former une équipe fictive qui gagnerait automatiquement
+                        // sans avoir joué : on les laisse "en vrac" pour que les règles
+                        // spéciales ci-dessous s'appliquent (victoire auto si 1 seul joueur,
+                        // 1v1 exceptionnel si 2 joueurs non coéquipiers, etc.).
+                        // Ex : 9 joueurs seuls en 2v2 -> 4 équipes de 2 et 1 joueur seul.
+                        // Ex : 3 équipes de 2 déjà formées + 3 joueurs seuls -> une 4e équipe
+                        // se forme avec 2 d'entre eux (un adversaire existe déjà), le dernier
+                        // reste seul. Mais 2 joueurs seuls sans aucune autre équipe (2v2) ne
+                        // sont PAS fusionnés en une équipe artificielle : ils s'affrontent en 1v1.
+                        const nbEquipesPotentielles = Math.floor(resultatChoix.sansEquipe.length / tailleEquipe);
+                        if (equipes.length + nbEquipesPotentielles >= 2) {
+                            const resultatCompletion = formerEquipesAleatoires(resultatChoix.sansEquipe, tailleEquipe);
+                            resultatCompletion.equipes.forEach(function (membres) {
+                                equipes.push({ nom: null, membres: membres });
+                                equipesFormeesAleatoirement.push(membres);
+                            });
+                            sansEquipe = resultatCompletion.sansEquipe;
+                        } else {
+                            sansEquipe = resultatChoix.sansEquipe;
+                        }
+                    } else {
+                        const joueurs = Object.keys(inscrits).map(function (uid) {
+                            const insc = inscrits[uid] || {};
+                            return { uid: uid, name: insc.name || 'Joueur', tag: insc.tag || '', identifiant: insc.identifiant || '' };
+                        });
+                        const resultat = formerEquipesAleatoires(joueurs, tailleEquipe);
+                        equipes = resultat.equipes.map(function (membres) { return { nom: null, membres: membres }; });
+                        sansEquipe = resultat.sansEquipe;
+                    }
+
+                    // Cas particulier des tournois en équipe (2v2, 3v3...) où personne n'a
+                    // réussi à former une équipe complète : plutôt que de bloquer le tirage,
+                    // on gère quelques cas de figure précis en fonction du nombre de joueurs
+                    // "orphelins" (sans équipe complète) :
+                    // - 1 seul joueur orphelin : il gagne automatiquement, faute d'adversaire.
+                    // - 2 joueurs orphelins qui ne sont PAS dans la même équipe (incomplète) :
+                    //   ils s'affrontent exceptionnellement en 1v1.
+                    // - tous les autres cas (3 joueurs orphelins, ou 2 joueurs de la même
+                    //   équipe incomplète, etc.) : personne ne gagne, le tirage est annulé
+                    //   faute de joueurs.
+                    if (tailleEquipe > 1 && equipes.length === 0 && sansEquipe.length > 0) {
+                        if (sansEquipe.length === 1) {
+                            const seul = sansEquipe[0];
+                            if (t.premierTour && !confirm('Un tirage a déjà été fait pour ce tournoi. Le relancer va déclarer directement "' + seul.name + '" vainqueur (seul·e inscrit·e). Continuer ?')) {
+                                return null;
+                            }
+                            return declarerVainqueurUnique(tournoiId, t, { nom: null, membres: [seul] }, seul.name, []).then(function () {
+                                return { sansEquipe: [] };
+                            });
+                        }
+
+                        // Deux joueurs sont "coéquipiers" seulement s'ils ont explicitement
+                        // choisi le même nom d'équipe (non vide) ; deux joueurs qui n'ont
+                        // choisi aucune équipe (equipe = null pour les deux) ne sont PAS
+                        // considérés comme coéquipiers.
+                        const memeEquipeIncomplete = !!(sansEquipe[0].equipe && cleNomEquipe(sansEquipe[0].equipe) === cleNomEquipe(sansEquipe[1].equipe));
+                        if (sansEquipe.length === 2 && !memeEquipeIncomplete) {
+                            const j1 = sansEquipe[0];
+                            const j2 = sansEquipe[1];
+                            if (t.premierTour && !confirm('Un tirage a déjà été fait pour ce tournoi. Le relancer va organiser un match 1v1 exceptionnel entre "' + j1.name + '" et "' + j2.name + '" (faute d\'équipes complètes). Continuer ?')) {
+                                return null;
+                            }
+                            const texteMatch = 'Pas assez de joueurs pour former des équipes complètes : match 1v1 exceptionnel entre ' + j1.name + ' et ' + j2.name + '.';
+                            return annulerVictoireAutomatiqueObsolete(t).then(function () {
+                                // Les deux orphelins jouent bel et bien un match : personne
+                                // n'est exclu ici (on efface un éventuel exclusUids d'un tirage
+                                // précédent, au cas où la situation aurait changé entre-temps).
+                                return tournoisRef.child(tournoiId).update({ premierTour: texteMatch, vainqueur: null, vainqueurUid: null, vainqueurUids: null, exclusUids: null });
+                            }).then(function () {
+                                const texteInfo = 'Pas assez de joueurs pour compléter les équipes du tournoi "' + nomTournoiGlobal + '" : tu affrontes exceptionnellement ton adversaire en 1v1 !';
+                                return Promise.all([
+                                    envoyerNotification(j1.uid, texteInfo, 'resultat'),
+                                    envoyerNotification(j2.uid, texteInfo, 'resultat')
+                                ]);
+                            }).then(function () {
+                                return { sansEquipe: [] };
+                            });
+                        }
+
+                        if (t.premierTour && !confirm('Un tirage a déjà été fait pour ce tournoi. Le relancer va annuler le tournoi faute de joueurs (personne ne gagnera). Continuer ?')) {
+                            return null;
+                        }
+                        const texteAnnulation = 'Pas assez de joueurs pour former des équipes complètes : le tournoi est annulé, personne ne gagne.';
+                        // Tournoi annulé : personne n'a joué (equipes.length === 0 ici, donc
+                        // sansEquipe contient TOUS les inscrits). On les marque tous exclus
+                        // pour que traiterParticipationsTournoisTermines() ne crédite aucun
+                        // "tournoi joué" pour un tournoi qui n'a en réalité jamais eu lieu.
+                        const exclusUidsAnnulation = sansEquipe.map(function (j) { return j.uid; }).filter(Boolean);
+                        return annulerVictoireAutomatiqueObsolete(t).then(function () {
+                            return tournoisRef.child(tournoiId).update({ premierTour: texteAnnulation, vainqueur: null, vainqueurUid: null, vainqueurUids: null, exclusUids: exclusUidsAnnulation.length ? exclusUidsAnnulation : null });
+                        }).then(function () {
+                            return { sansEquipe: sansEquipe };
+                        });
+                    }
+
+                    const entrants = equipes.map(formaterEntrantEquipe);
+
+                    if (entrants.length === 0) {
                         alert(tailleEquipe > 1
-                            ? 'Il faut au moins 2 équipes complètes (' + tailleEquipe + ' joueurs chacune) pour lancer un tirage au sort.'
-                            : 'Il faut au moins 2 inscrits pour lancer un tirage au sort.');
+                            ? 'Il faut au moins une équipe complète (' + tailleEquipe + ' joueurs) pour lancer un tirage au sort.'
+                            : 'Il faut au moins 1 inscrit pour lancer un tirage au sort.');
                         return null;
+                    }
+
+                    // Un seul entrant complet : personne à affronter, victoire automatique
+                    if (entrants.length === 1) {
+                        const texteConfirmVictoire = sansEquipe.length > 0
+                            ? 'Un tirage a déjà été fait pour ce tournoi. Le relancer va déclarer directement "' + entrants[0] + '" vainqueur (aucune autre équipe complète, malgré d\'autres inscrits sans équipe complète). Continuer ?'
+                            : 'Un tirage a déjà été fait pour ce tournoi. Le relancer va déclarer directement "' + entrants[0] + '" vainqueur (seul·e inscrit·e). Continuer ?';
+                        if (t.premierTour && !confirm(texteConfirmVictoire)) {
+                            return null;
+                        }
+                        return declarerVainqueurUnique(tournoiId, t, equipes[0], entrants[0], sansEquipe).then(function () {
+                            return { sansEquipe: sansEquipe };
+                        });
                     }
 
                     if (t.premierTour && !confirm('Un tirage a déjà été fait pour ce tournoi. Le relancer va le remplacer (nouveau mélange et, si besoin, de nouvelles équipes). Continuer ?')) {
                         return null;
                     }
 
-                    const tirage = genererTirageAvecByes(entrants);
+                    // On passe les objets équipe (et non les textes) au générateur de
+                    // tirage : celui-ci est générique (simple mélange), donc ça
+                    // fonctionne à l'identique, mais ça permet ensuite de retrouver
+                    // les uid de chaque membre pour les notifier individuellement.
+                    const tirage = genererTirageAvecByes(equipes);
                     if (!tirage) return null;
 
                     const lignes = [];
                     tirage.matchs.forEach(function (match, index) {
-                        lignes.push('Match ' + (index + 1) + ' : ' + match[0] + ' vs ' + match[1]);
+                        lignes.push('Match ' + (index + 1) + ' : ' + formaterEntrantEquipe(match[0]) + ' vs ' + formaterEntrantEquipe(match[1]));
                     });
-                    tirage.exemptes.forEach(function (nom) {
-                        lignes.push(nom + ' : qualifié(e) d\'office (bye)');
+                    tirage.exemptes.forEach(function (equipe) {
+                        lignes.push(formaterEntrantEquipe(equipe) + ' : qualifié(e) d\'office (bye)');
                     });
                     if (sansEquipe.length > 0) {
                         lignes.push('');
-                        lignes.push('⚠️ Sans équipe complète, non inclus dans le tirage : ' + sansEquipe.join(', '));
+                        lignes.push('⚠️ Sans équipe complète, non inclus dans le tirage : ' + sansEquipe.map(function (j) { return j.name; }).join(', '));
                     }
 
                     const texte = lignes.join('\n');
-                    return tournoisRef.child(tournoiId).update({ premierTour: texte }).then(function () {
-                        return sansEquipe;
+                    // Les joueurs restés "sans équipe complète" (bench) n'ont pas joué :
+                    // on les persiste dans exclusUids pour que
+                    // traiterParticipationsTournoisTermines() ne leur crédite pas de
+                    // tournoi joué, même si le reste du bracket s'est bien déroulé.
+                    const exclusUidsTirage = sansEquipe.map(function (j) { return j.uid; }).filter(Boolean);
+                    return annulerVictoireAutomatiqueObsolete(t).then(function () {
+                        return tournoisRef.child(tournoiId).update({ premierTour: texte, vainqueur: null, vainqueurUid: null, vainqueurUids: null, exclusUids: exclusUidsTirage.length ? exclusUidsTirage : null });
+                    }).then(function () {
+                        return {
+                            sansEquipe: sansEquipe,
+                            equipesFormeesAleatoirement: equipesFormeesAleatoirement,
+                            matchs: tirage.matchs,
+                            exemptes: tirage.exemptes
+                        };
                     });
                 })
-                .then(function (sansEquipe) {
-                    if (sansEquipe === null || sansEquipe === undefined) return;
+                .then(function (resultat) {
+                    if (!resultat) return;
                     rafraichir();
 
+                    // Peu importe le cas de figure (bracket complet, victoire auto, 1v1
+                    // exceptionnel, annulation...), TOUT changement qui concerne un joueur
+                    // doit lui être notifié dans sa boîte de réception : personne ne doit
+                    // découvrir un changement uniquement en rouvrant la page du tournoi.
+
+                    // 1) Joueurs placés aléatoirement dans une équipe (ils n'ont pas choisi
+                    // eux-mêmes leurs coéquipiers) : on les prévient de la composition.
+                    const equipesFormeesAleatoirement = resultat.equipesFormeesAleatoirement || [];
+                    equipesFormeesAleatoirement.forEach(function (membres) {
+                        membres.forEach(function (j) {
+                            const coequipiers = membres
+                                .filter(function (m) { return m.uid !== j.uid; })
+                                .map(function (m) { return m.name; })
+                                .join(' et ');
+                            envoyerNotification(
+                                j.uid,
+                                'Vous n\'étiez pas assez nombreux pour compléter votre équipe : tu as été placé(e) aléatoirement avec ' + coequipiers + ' pour le tournoi "' + nomTournoiGlobal + '".',
+                                'equipe-aleatoire'
+                            );
+                        });
+                    });
+
+                    // 2) Joueurs/équipes ayant reçu un adversaire au 1er tour.
+                    const matchs = resultat.matchs || [];
+                    matchs.forEach(function (match) {
+                        const equipeA = match[0];
+                        const equipeB = match[1];
+                        const texteA = formaterEntrantEquipe(equipeA);
+                        const texteB = formaterEntrantEquipe(equipeB);
+                        equipeA.membres.forEach(function (j) {
+                            envoyerNotification(j.uid, 'Tirage au sort du tournoi "' + nomTournoiGlobal + '" : tu affrontes ' + texteB + ' au 1er tour !', 'match');
+                        });
+                        equipeB.membres.forEach(function (j) {
+                            envoyerNotification(j.uid, 'Tirage au sort du tournoi "' + nomTournoiGlobal + '" : tu affrontes ' + texteA + ' au 1er tour !', 'match');
+                        });
+                    });
+
+                    // 3) Joueurs/équipes qualifiés d'office (bye), faute d'adversaire à ce stade.
+                    const exemptes = resultat.exemptes || [];
+                    exemptes.forEach(function (equipe) {
+                        equipe.membres.forEach(function (j) {
+                            envoyerNotification(j.uid, 'Tirage au sort du tournoi "' + nomTournoiGlobal + '" : tu es qualifié(e) d\'office pour le tour suivant (bye), faute d\'adversaire à ce stade !', 'bye');
+                        });
+                    });
+
+                    // 4) Joueurs exclus faute de joueurs pour compléter une équipe.
+                    const sansEquipe = resultat.sansEquipe || [];
                     if (sansEquipe.length > 0) {
-                        // Retrouve l'uid de chaque joueur sans équipe complète (gère les doublons de nom)
-                        const uidsParNom = {};
-                        Object.keys(inscritsGlobal).forEach(function (uid) {
-                            const nom = inscritsGlobal[uid].name || 'Joueur';
-                            if (!uidsParNom[nom]) uidsParNom[nom] = [];
-                            uidsParNom[nom].push(uid);
-                        });
-
-                        const joueursExclus = [];
-                        sansEquipe.forEach(function (nom) {
-                            const uid = (uidsParNom[nom] || []).shift();
-                            if (uid) {
-                                joueursExclus.push(Object.assign({ uid: uid, name: nom }, inscritsGlobal[uid]));
-                            }
-                        });
-
                         // Message d'excuse envoyé à chaque joueur n'ayant pas pu jouer par manque de joueurs
-                        joueursExclus.forEach(function (j) {
+                        sansEquipe.forEach(function (j) {
                             envoyerNotification(
                                 j.uid,
                                 'On est désolé, tu n\'as pas pu participer au tournoi "' + nomTournoiGlobal + '" par manque de joueurs pour compléter une équipe. Toutes nos excuses pour la gêne occasionnée, à bientôt pour le prochain tournoi !',
@@ -3193,8 +4758,8 @@
 
                         // Récap envoyé à l'admin (déjà connecté ici, estAdmin() a été vérifié plus haut)
                         // avec le nom et le profil (tag / identifiant) des joueurs concernés
-                        if (joueursExclus.length > 0 && window.currentUser) {
-                            const details = joueursExclus.map(function (j) {
+                        if (window.currentUser) {
+                            const details = sansEquipe.map(function (j) {
                                 const profil = j.tag || j.identifiant || 'profil non renseigné';
                                 return j.name + ' (' + profil + ')';
                             }).join(', ');
@@ -3212,85 +4777,485 @@
                 });
         }
 
-        // Génère le HTML d'une carte "bracket" affichant la progression d'un tournoi :
-        // 8èmes de finale, quarts de finale, demi-finale, finale et vainqueur.
-        // Chaque étape affiche sa valeur si elle est renseignée, sinon un "?".
-        // L'admin peut ouvrir un petit formulaire pour renseigner/modifier ces étapes.
-        function genererCarteBracketHTML(t) {
-            const etapes = [
-                { cle: 'huitiemes', label: '8èmes de finale', emoji: '🎮' },
-                { cle: 'quarts', label: 'Quarts de finale', emoji: '🔥' },
-                { cle: 'demi', label: 'Demi-finale', emoji: '⚔️' },
-                { cle: 'finale', label: 'Finale', emoji: '🥈' }
-            ];
+        // ============================================================
+        // BRACKET INTERACTIF (arbre à élimination directe)
+        // ------------------------------------------------------------
+        // Structure stockée sous tournois/{id}/bracket = { rounds: [...] }
+        // rounds est un tableau de "rounds" (8èmes, quarts, demi, finale...),
+        // chaque round est un tableau de matchs { j1, j2, vainqueur }.
+        // j1/j2 valent :
+        //   - un nom (équipe ou joueur)
+        //   - null au round 0 = "exempté" (bye), le match est auto-gagné
+        //   - null aux rounds suivants = "en attente" du round précédent
+        // ============================================================
 
-            const lignesAffichage = etapes.map(function (etape) {
-                const valeur = t[etape.cle];
-                return '<div class="bracket-etape">' +
-                    '<span class="bracket-etape-label">' + etape.emoji + ' ' + etape.label + '</span>' +
-                    '<span class="bracket-etape-valeur' + (valeur ? '' : ' vide') + '">' + (valeur ? echapperHTML(valeur) : '?') + '</span>' +
-                    '</div>';
-            }).join('');
-
-            const ligneVainqueur = '<div class="bracket-etape bracket-vainqueur">' +
-                '<span class="bracket-etape-label">🏆 Vainqueur</span>' +
-                '<span class="bracket-etape-valeur' + (t.vainqueur ? '' : ' vide') + '">' + (t.vainqueur ? echapperHTML(t.vainqueur) : '?') + '</span>' +
-                '</div>';
-
-            const formulaireAdmin = estAdmin()
-                ? '<button type="button" class="bracket-edit-toggle" data-id="' + echapperHTML(t.id) + '">✏️ Renseigner les étapes</button>' +
-                  '<div class="bracket-edit-form hidden" data-id="' + echapperHTML(t.id) + '">' +
-                    etapes.map(function (etape) {
-                        return '<label>' + etape.label + '</label>' +
-                            '<input type="text" class="bracket-input" data-id="' + echapperHTML(t.id) + '" data-etape="' + etape.cle + '" placeholder="Ex : Nom du qualifié" value="' + echapperHTML(t[etape.cle] || '') + '">';
-                    }).join('') +
-                    '<button type="button" class="bracket-save-btn" data-id="' + echapperHTML(t.id) + '">Enregistrer</button>' +
-                  '</div>'
-                : '';
-
-            return '<div class="tournoi-card bracket-card">' +
-                '<h3>' + echapperHTML(t.nom) + '</h3>' +
-                lignesAffichage +
-                ligneVainqueur +
-                formulaireAdmin +
-                '</div>';
+        // Récupère la liste des entrants (équipes formées selon le champ
+        // "equipe" choisi à l'inscription, ou joueurs individuels si le
+        // tournoi ne se joue pas en équipe).
+        // Chaque entrant est renvoyé sous la forme { label, uid } : le "label"
+        // sert à l'affichage du bracket, et l'"uid" (celui d'un représentant de
+        // l'équipe, ou du joueur lui-même en solo) sert plus tard à créditer
+        // automatiquement la victoire du champion dans les stats des joueurs.
+        function obtenirEntrantsBracket(t) {
+            const inscrits = t.inscrits || {};
+            const tailleEquipe = tailleEquipeDuTournoi(t.nom);
+            if (tailleEquipe > 1) {
+                const formation = formerEquipesDepuisChoix(inscrits, tailleEquipe);
+                return formation.equipes.map(function (e) {
+                    return { label: formaterEntrantEquipe(e), uid: e.membres[0].uid };
+                });
+            }
+            return Object.keys(inscrits).map(function (uid) {
+                return { label: inscrits[uid].name || 'Joueur', uid: uid };
+            });
         }
 
-        // Enregistre les étapes du bracket (8èmes, quarts, demi, finale) d'un tournoi (admin uniquement)
-        function definirEtapesBracket(tournoiId, etapes, rafraichir) {
-            if (!estAdmin()) {
-                alert("Seul l'administrateur peut renseigner le bracket.");
-                return;
+        // Construit la structure complète du bracket (tous les rounds) à
+        // partir de la liste d'entrants, en répartissant aléatoirement les
+        // "exemptés" (byes) si le nombre d'entrants n'est pas une puissance de 2.
+        function genererStructureBracket(entrants) {
+            const reels = melangerAleatoirement(entrants.filter(function (e) { return e && e.label; }));
+            if (reels.length < 2) return null;
+
+            let taille = 1;
+            while (taille < reels.length) taille *= 2;
+            const nbMatchs = taille / 2;
+            const nbByes = taille - reels.length;
+
+            const indicesAvecBye = melangerAleatoirement(
+                Array.from({ length: nbMatchs }, function (_, i) { return i; })
+            ).slice(0, nbByes);
+
+            // Note : si deux entrants ont exactement le même libellé affiché
+            // (cas très rare), ils partageront la même entrée dans cette table
+            // et l'un pourrait être crédité à la place de l'autre.
+            const entrantsUid = {};
+            reels.forEach(function (e) { entrantsUid[e.label] = e.uid; });
+
+            const round0 = [];
+            let curseur = 0;
+            for (let i = 0; i < nbMatchs; i++) {
+                const aBye = indicesAvecBye.indexOf(i) !== -1;
+                if (aBye) {
+                    const j1 = reels[curseur].label; curseur++;
+                    round0.push({ j1: j1, j2: null, vainqueur: j1 });
+                } else {
+                    const j1 = reels[curseur].label; curseur++;
+                    const j2 = reels[curseur].label; curseur++;
+                    round0.push({ j1: j1, j2: j2, vainqueur: null });
+                }
             }
 
-            tournoisRef.child(tournoiId).update(etapes)
+            const rounds = [round0];
+            let nbMatchsRound = round0.length;
+            while (nbMatchsRound > 1) {
+                nbMatchsRound = nbMatchsRound / 2;
+                const round = [];
+                for (let i = 0; i < nbMatchsRound; i++) round.push({ j1: null, j2: null, vainqueur: null });
+                rounds.push(round);
+            }
+
+            propagerVainqueursAutomatiques(rounds);
+            return { rounds: rounds, entrantsUid: entrantsUid };
+        }
+
+        // Fait remonter automatiquement les vainqueurs déjà connus (cas des
+        // "exemptés") dans les rounds suivants, en cascade si besoin.
+        function propagerVainqueursAutomatiques(rounds) {
+            for (let r = 0; r < rounds.length - 1; r++) {
+                rounds[r].forEach(function (match, idx) {
+                    if (!match.vainqueur) return;
+                    const parent = rounds[r + 1][Math.floor(idx / 2)];
+                    if (idx % 2 === 0) parent.j1 = match.vainqueur; else parent.j2 = match.vainqueur;
+                    if (parent.j1 && !parent.j2) parent.vainqueur = parent.j1;
+                    else if (parent.j2 && !parent.j1) parent.vainqueur = parent.j2;
+                });
+            }
+        }
+
+        // Efface tout ce qui dépend (plus loin dans l'arbre) d'un match donné,
+        // utilisé quand on change le vainqueur d'un match déjà propagé.
+        function effacerAvalMatch(rounds, roundIdx, matchIdx) {
+            if (roundIdx + 1 >= rounds.length) return;
+            const parentIdx = Math.floor(matchIdx / 2);
+            const parent = rounds[roundIdx + 1][parentIdx];
+            const slot = matchIdx % 2 === 0 ? 'j1' : 'j2';
+            if (parent[slot] !== null) {
+                parent[slot] = null;
+                parent.vainqueur = null;
+                effacerAvalMatch(rounds, roundIdx + 1, parentIdx);
+            }
+        }
+
+        // Après avoir fixé le vainqueur d'un match, propage (et re-propage en
+        // cascade) ce résultat dans les rounds suivants.
+        function repropagerAval(rounds, roundIdx, matchIdx) {
+            if (roundIdx + 1 >= rounds.length) return;
+            const match = rounds[roundIdx][matchIdx];
+            const parentIdx = Math.floor(matchIdx / 2);
+            const parent = rounds[roundIdx + 1][parentIdx];
+            const slot = matchIdx % 2 === 0 ? 'j1' : 'j2';
+
+            if (parent[slot] !== match.vainqueur) {
+                parent[slot] = match.vainqueur;
+                parent.vainqueur = null;
+                effacerAvalMatch(rounds, roundIdx + 1, parentIdx);
+            }
+
+            if (parent.j1 && !parent.j2) {
+                parent.vainqueur = parent.j1;
+                repropagerAval(rounds, roundIdx + 1, parentIdx);
+            } else if (parent.j2 && !parent.j1) {
+                parent.vainqueur = parent.j2;
+                repropagerAval(rounds, roundIdx + 1, parentIdx);
+            }
+        }
+
+        // Si le round final du bracket a désigné un vainqueur, relie ce résultat
+        // au système existant de validation de tournoi (definirVainqueurTournoi) :
+        // ça crédite automatiquement la victoire du champion (et de toute son
+        // équipe), met à jour le classement/les badges, et prévient les inscrits
+        // — exactement comme si l'admin l'avait validé depuis "Tournois terminés".
+        // Si le champion change (correction d'un résultat), l'ancienne victoire
+        // est retirée et la nouvelle créditée automatiquement.
+        function verifierChampionBracket(tournoiId, rounds, entrantsUid, rafraichir) {
+            const dernierMatch = rounds[rounds.length - 1][0];
+            if (!dernierMatch || !dernierMatch.vainqueur) {
+                if (rafraichir) rafraichir();
+                return;
+            }
+            const uidChampion = (entrantsUid && entrantsUid[dernierMatch.vainqueur]) || null;
+            definirVainqueurTournoi(tournoiId, uidChampion, dernierMatch.vainqueur, rafraichir);
+        }
+
+        // Génère (ou régénère, avec confirmation) le bracket d'un tournoi
+        // à partir des joueurs/équipes actuellement inscrits (admin uniquement).
+        function genererBracketTournoi(tournoiId, t, rafraichir) {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut générer le bracket.");
+                return;
+            }
+            if (t.bracket && t.bracket.rounds && t.bracket.rounds.length) {
+                if (!confirm('Un bracket existe déjà pour ce tournoi. Le régénérer effacera les résultats déjà saisis. Continuer ?')) {
+                    return;
+                }
+            }
+            const entrants = obtenirEntrantsBracket(t);
+            if (entrants.length < 2) {
+                alert('Il faut au moins 2 joueurs ou équipes inscrits pour générer un bracket.');
+                return;
+            }
+            const structure = genererStructureBracket(entrants);
+            tournoisRef.child(tournoiId).child('bracket').set(structure)
                 .then(function () {
-                    rafraichir();
+                    verifierChampionBracket(tournoiId, structure.rounds, structure.entrantsUid, rafraichir);
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
-                    alert("Impossible d'enregistrer le bracket : " + error.message);
+                    alert('Impossible de générer le bracket : ' + error.message);
                 });
         }
 
-        // Gère l'ouverture du formulaire d'édition et l'enregistrement du bracket
-        // depuis la page d'accueil (délégation d'événement)
-        accueilBracketList.addEventListener('click', function (e) {
-            const toggleBtn = e.target.closest('.bracket-edit-toggle');
-            if (toggleBtn) {
-                const form = accueilBracketList.querySelector('.bracket-edit-form[data-id="' + toggleBtn.dataset.id + '"]');
-                if (form) form.classList.toggle('hidden');
+        // Enregistre le vainqueur d'un match précis puis répercute le résultat
+        // dans le reste de l'arbre (admin uniquement). Si ce résultat désigne
+        // (ou change) le champion du bracket, la victoire est automatiquement
+        // créditée via verifierChampionBracket.
+        function definirVainqueurMatchBracket(tournoiId, rounds, roundIdx, matchIdx, nomVainqueur, entrantsUid, rafraichir) {
+            if (!estAdmin()) {
+                alert("Seul l'administrateur peut valider un résultat de match.");
+                return;
+            }
+            const match = rounds[roundIdx][matchIdx];
+            if (nomVainqueur !== match.j1 && nomVainqueur !== match.j2) return;
+
+            match.vainqueur = nomVainqueur;
+            repropagerAval(rounds, roundIdx, matchIdx);
+
+            tournoisRef.child(tournoiId).child('bracket').child('rounds').set(rounds)
+                .then(function () {
+                    verifierChampionBracket(tournoiId, rounds, entrantsUid, rafraichir);
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    alert("Impossible d'enregistrer le résultat : " + error.message);
+                });
+        }
+
+        // Libellé lisible d'un round selon sa distance à la finale (0 = finale).
+        function libelleRoundBracket(indexDepuisFin) {
+            if (indexDepuisFin === 0) return 'Finale';
+            if (indexDepuisFin === 1) return 'Demi-finale';
+            if (indexDepuisFin === 2) return 'Quart de finale';
+            return Math.pow(2, indexDepuisFin + 1) + 'èmes de finale';
+        }
+
+        // HTML d'un match (deux "cases" joueur/équipe, cliquables par l'admin
+        // pour désigner le vainqueur une fois les deux camps connus).
+        function genererMatchBracketHTML(tournoiId, roundIdx, matchIdx, match, estRoundInitial) {
+            function ligne(nom) {
+                if (!nom) {
+                    return '<span class="bracket-competitor vide">' + (estRoundInitial ? 'Exempt' : 'En attente') + '</span>';
+                }
+                const classes = ['bracket-competitor'];
+                if (match.vainqueur === nom) classes.push('gagnant');
+                const peutCliquer = estAdmin() && match.j1 && match.j2;
+                if (peutCliquer) classes.push('cliquable');
+                return '<span class="' + classes.join(' ') + '"' +
+                    (peutCliquer
+                        ? ' data-round="' + roundIdx + '" data-match="' + matchIdx + '" data-nom="' + echapperHTML(nom) + '" data-tid="' + echapperHTML(tournoiId) + '"'
+                        : '') +
+                    '>' + echapperHTML(nom) + (match.vainqueur === nom ? ' ✓' : '') + '</span>';
+            }
+            return '<div class="bracket-match">' + ligne(match.j1) + ligne(match.j2) + '</div>';
+        }
+
+        // Génère le HTML complet de la carte "bracket" d'un tournoi : soit le
+        // bouton pour générer l'arbre (admin, si pas encore fait), soit l'arbre
+        // interactif avec, pour chaque round, ses matchs.
+        function genererCarteBracketHTML(t) {
+            const rounds = t.bracket && t.bracket.rounds;
+
+            if (!rounds || !rounds.length) {
+                const contenu = estAdmin()
+                    ? '<button type="button" class="bracket-generer-btn" data-id="' + echapperHTML(t.id) + '">🎲 Générer le bracket</button>'
+                    : '<p style="text-align:center; color:#888; font-size:0.85rem;">Le bracket n\'a pas encore été généré.</p>';
+                return '<div class="tournoi-card bracket-card"><h3>' + echapperHTML(t.nom) + '</h3>' + contenu + '</div>';
+            }
+
+            const total = rounds.length;
+            const colonnes = rounds.map(function (round, r) {
+                const indexDepuisFin = total - 1 - r;
+                const matchs = round.map(function (match, i) {
+                    return genererMatchBracketHTML(t.id, r, i, match, r === 0);
+                }).join('');
+                return '<div class="bracket-round-col">' +
+                    '<div class="bracket-round-label">' + libelleRoundBracket(indexDepuisFin) + '</div>' +
+                    '<div class="bracket-round-matchs">' + matchs + '</div>' +
+                    '</div>';
+            }).join('');
+
+            const dernierMatch = rounds[total - 1][0];
+            const champion = dernierMatch && dernierMatch.vainqueur
+                ? '<div class="bracket-champion">🏆 Vainqueur du bracket : ' + echapperHTML(dernierMatch.vainqueur) + '<br><span style="font-weight:500; font-size:0.75rem;">Victoire créditée automatiquement au classement</span></div>'
+                : '';
+
+            const boutons =
+                (estAdmin() ? '<button type="button" class="bracket-generer-btn" data-id="' + echapperHTML(t.id) + '">🔁 Régénérer le bracket</button>' : '') +
+                '<button type="button" class="bracket-pdf-btn" data-id="' + echapperHTML(t.id) + '" data-nom="' + echapperHTML(t.nom) + '">📄 Télécharger en PDF</button>' +
+                '<button type="button" class="bracket-image-btn" data-id="' + echapperHTML(t.id) + '" data-nom="' + echapperHTML(t.nom) + '">🖼️ Exporter/partager en image</button>';
+
+            return '<div class="tournoi-card bracket-card">' +
+                '<h3>' + echapperHTML(t.nom) + '</h3>' +
+                '<div class="bracket-scroll-wrap"><div class="bracket-tree" data-id="' + echapperHTML(t.id) + '">' + colonnes + '</div></div>' +
+                champion +
+                '<div class="bracket-actions">' + boutons + '</div>' +
+                '</div>';
+        }
+
+        // Dessine (en SVG, par-dessus l'arbre) les traits qui relient chaque
+        // match au match suivant, en mesurant les positions réelles à l'écran
+        // (fonctionne quelle que soit la hauteur des cartes).
+        function dessinerConnecteursArbre(arbre) {
+            const ancien = arbre.querySelector('svg.bracket-connecteurs');
+            if (ancien) ancien.remove();
+
+            const colonnes = arbre.querySelectorAll('.bracket-round-col');
+            if (colonnes.length < 2) return;
+
+            const rectArbre = arbre.getBoundingClientRect();
+            const svgNS = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('class', 'bracket-connecteurs');
+            svg.setAttribute('width', arbre.scrollWidth);
+            svg.setAttribute('height', arbre.scrollHeight);
+            svg.style.position = 'absolute';
+            svg.style.left = '0';
+            svg.style.top = '0';
+            svg.style.pointerEvents = 'none';
+
+            for (let c = 0; c < colonnes.length - 1; c++) {
+                const matchsActuels = colonnes[c].querySelectorAll('.bracket-match');
+                const matchsSuivants = colonnes[c + 1].querySelectorAll('.bracket-match');
+                matchsActuels.forEach(function (matchEl, i) {
+                    const parentEl = matchsSuivants[Math.floor(i / 2)];
+                    if (!parentEl) return;
+                    const r1 = matchEl.getBoundingClientRect();
+                    const r2 = parentEl.getBoundingClientRect();
+                    const x1 = r1.right - rectArbre.left;
+                    const y1 = r1.top + r1.height / 2 - rectArbre.top;
+                    const x2 = r2.left - rectArbre.left;
+                    const y2 = r2.top + r2.height / 2 - rectArbre.top;
+                    const xMid = x1 + (x2 - x1) / 2;
+                    const path = document.createElementNS(svgNS, 'path');
+                    path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' H ' + xMid + ' V ' + y2 + ' H ' + x2);
+                    path.setAttribute('stroke', '#c7cbe6');
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('fill', 'none');
+                    svg.appendChild(path);
+                });
+            }
+
+            arbre.appendChild(svg);
+        }
+
+        // Redessine les connecteurs de tous les brackets affichés dans un
+        // conteneur donné (à appeler après chaque re-rendu du HTML).
+        function dessinerTousLesConnecteursBracket(conteneur) {
+            requestAnimationFrame(function () {
+                conteneur.querySelectorAll('.bracket-tree').forEach(dessinerConnecteursArbre);
+            });
+        }
+
+        // Génère un PDF du bracket tel qu'affiché à l'instant T (peut être
+        // téléchargé à n'importe quelle étape, même si le bracket n'est pas
+        // encore complet). Le rendu est cloné hors-écran pour ne pas être
+        // limité par le défilement horizontal de la carte.
+        function telechargerBracketPDF(tournoiId, nomTournoi, btn) {
+            const arbre = document.querySelector('.bracket-tree[data-id="' + tournoiId + '"]');
+            if (!arbre || typeof html2canvas === 'undefined' || !window.jspdf) {
+                alert("Le bracket doit d'abord être généré pour pouvoir être téléchargé.");
                 return;
             }
 
-            const saveBtn = e.target.closest('.bracket-save-btn');
-            if (saveBtn) {
-                const inputs = accueilBracketList.querySelectorAll('.bracket-input[data-id="' + saveBtn.dataset.id + '"]');
-                const etapes = {};
-                inputs.forEach(function (input) {
-                    etapes[input.dataset.etape] = input.value.trim();
+            const texteOriginal = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Génération...';
+
+            const clone = arbre.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.left = '-99999px';
+            clone.style.top = '0';
+            clone.style.background = '#ffffff';
+            clone.style.padding = '24px';
+            document.body.appendChild(clone);
+
+            html2canvas(clone, { backgroundColor: '#ffffff', scale: 2 })
+                .then(function (canvas) {
+                    document.body.removeChild(clone);
+                    const imgData = canvas.toDataURL('image/png');
+                    const jsPDF = window.jspdf.jsPDF;
+                    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pageWidth * canvas.height / canvas.width;
+                    pdf.text(nomTournoi, 10, 10);
+                    pdf.addImage(imgData, 'PNG', 0, 18, pageWidth, pageHeight - 18 > 0 ? pageHeight : pageHeight);
+                    pdf.save('bracket-' + nomTournoi.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.pdf');
+                })
+                .catch(function (error) {
+                    if (clone.parentNode) document.body.removeChild(clone);
+                    console.error('Erreur génération PDF :', error);
+                    alert('Impossible de générer le PDF.');
+                })
+                .finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = texteOriginal;
                 });
-                definirEtapesBracket(saveBtn.dataset.id, etapes, afficherTournoisAccueil);
+        }
+
+        // Exporte le bracket (tel qu'affiché à l'instant T) en image PNG, et
+        // propose le partage natif (Web Share API) quand le navigateur le permet
+        // (ex : partager directement vers Discord/Instagram sur mobile) ; sinon,
+        // l'image est simplement téléchargée.
+        function exporterBracketImage(tournoiId, nomTournoi, btn) {
+            const arbre = document.querySelector('.bracket-tree[data-id="' + tournoiId + '"]');
+            if (!arbre || typeof html2canvas === 'undefined') {
+                alert("Le bracket doit d'abord être généré pour pouvoir être exporté.");
+                return;
+            }
+
+            const texteOriginal = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Génération...';
+
+            const clone = arbre.cloneNode(true);
+            clone.style.position = 'absolute';
+            clone.style.left = '-99999px';
+            clone.style.top = '0';
+            clone.style.background = '#ffffff';
+            clone.style.padding = '24px';
+            document.body.appendChild(clone);
+
+            const nomFichier = 'bracket-' + nomTournoi.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png';
+
+            html2canvas(clone, { backgroundColor: '#ffffff', scale: 2 })
+                .then(function (canvas) {
+                    document.body.removeChild(clone);
+                    return new Promise(function (resolve) {
+                        canvas.toBlob(function (blob) { resolve(blob); }, 'image/png');
+                    });
+                })
+                .then(function (blob) {
+                    if (!blob) throw new Error('Image vide');
+                    const fichier = new File([blob], nomFichier, { type: 'image/png' });
+
+                    // Partage natif si disponible (mobile principalement) et si le
+                    // navigateur accepte de partager des fichiers image
+                    if (navigator.share && navigator.canShare && navigator.canShare({ files: [fichier] })) {
+                        return navigator.share({
+                            files: [fichier],
+                            title: 'Bracket : ' + nomTournoi,
+                            text: 'Bracket du tournoi "' + nomTournoi + '"'
+                        }).catch(function (error) {
+                            // L'utilisateur a annulé le partage : ce n'est pas une erreur à signaler
+                            if (error && error.name !== 'AbortError') console.error('Erreur partage bracket :', error);
+                        });
+                    }
+
+                    // Sinon, téléchargement classique de l'image
+                    const lien = document.createElement('a');
+                    lien.href = URL.createObjectURL(blob);
+                    lien.download = nomFichier;
+                    document.body.appendChild(lien);
+                    lien.click();
+                    document.body.removeChild(lien);
+                    setTimeout(function () { URL.revokeObjectURL(lien.href); }, 5000);
+                })
+                .catch(function (error) {
+                    if (clone.parentNode) document.body.removeChild(clone);
+                    console.error('Erreur export image du bracket :', error);
+                    alert("Impossible d'exporter le bracket en image.");
+                })
+                .finally(function () {
+                    btn.disabled = false;
+                    btn.textContent = texteOriginal;
+                });
+        }
+
+        // Délégation d'événements pour tout ce qui touche au bracket :
+        // génération, clic sur un vainqueur de match, téléchargement PDF, export image.
+        accueilBracketList.addEventListener('click', function (e) {
+            const genererBtn = e.target.closest('.bracket-generer-btn');
+            if (genererBtn) {
+                tournoisRef.child(genererBtn.dataset.id).once('value').then(function (snap) {
+                    const t = Object.assign({ id: genererBtn.dataset.id }, snap.val());
+                    genererBracketTournoi(genererBtn.dataset.id, t, afficherTournoisAccueil);
+                });
+                return;
+            }
+
+            const competiteurEl = e.target.closest('.bracket-competitor.cliquable');
+            if (competiteurEl) {
+                const tournoiId = competiteurEl.dataset.tid;
+                const roundIdx = parseInt(competiteurEl.dataset.round, 10);
+                const matchIdx = parseInt(competiteurEl.dataset.match, 10);
+                const nom = competiteurEl.dataset.nom;
+                tournoisRef.child(tournoiId).child('bracket').once('value').then(function (snap) {
+                    const bracket = snap.val();
+                    if (!bracket || !bracket.rounds) return;
+                    definirVainqueurMatchBracket(tournoiId, bracket.rounds, roundIdx, matchIdx, nom, bracket.entrantsUid, afficherTournoisAccueil);
+                });
+                return;
+            }
+
+            const pdfBtn = e.target.closest('.bracket-pdf-btn');
+            if (pdfBtn) {
+                telechargerBracketPDF(pdfBtn.dataset.id, pdfBtn.dataset.nom, pdfBtn);
+                return;
+            }
+
+            const imageBtn = e.target.closest('.bracket-image-btn');
+            if (imageBtn) {
+                exporterBracketImage(imageBtn.dataset.id, imageBtn.dataset.nom, imageBtn);
             }
         });
 
@@ -3311,9 +5276,10 @@
                 ? '<select class="vainqueur-select" data-id="' + echapperHTML(t.id) + '"><option value="">-- Choisir le vainqueur --</option>' + optionsInscrits + '</select>'
                 : '<input type="text" class="vainqueur-input" data-id="' + echapperHTML(t.id) + '" placeholder="Nom du vainqueur" value="' + echapperHTML(vainqueur) + '">';
 
-            return '<div class="tournoi-card termine">' +
+            return '<div class="tournoi-card termine" id="tournoi-card-' + echapperHTML(t.id) + '">' +
                 '<h3>' + echapperHTML(t.nom) + '</h3>' +
                 '<p>📅 ' + formatDate(t.date) + (t.heure ? ' à ' + echapperHTML(t.heure) : '') + '</p>' +
+                (t.description ? '<p style="margin-top:0.3rem; white-space:pre-line;">📝 ' + echapperHTML(t.description) + '</p>' : '') +
                 (vainqueur
                     ? '<p>🏆 Vainqueur : <span class="vainqueur-texte">' + echapperHTML(vainqueur) + '</span></p>'
                     : '<p style="color:#888;">Résultat pas encore renseigné</p>') +
@@ -3364,10 +5330,44 @@
             });
         }
 
+        // Calcule la différence entre l'ancienne et la nouvelle liste de gagnants
+        // (uids) et retourne les opérations nécessaires pour ajuster le compteur
+        // de victoires de CHAQUE membre concerné (et non plus un seul représentant
+        // de l'équipe) : -1 pour ceux qui ne gagnent plus, +1 pour les nouveaux.
+        // Les uids présents dans les deux listes ne sont pas touchés (pas de
+        // double décrément/incrément si le résultat ne change pas pour eux).
+        function ajusterVictoiresEquipe(anciensUids, nouveauxUids) {
+            anciensUids = anciensUids || [];
+            nouveauxUids = nouveauxUids || [];
+            const operations = [];
+
+            anciensUids.forEach(function (uid) {
+                if (uid && nouveauxUids.indexOf(uid) === -1) {
+                    operations.push(etiqueterErreur(
+                        ajusterCompteur(uid, 'victoires', -1),
+                        "retrait de la victoire à l'ancien vainqueur (uid: " + uid + ")"
+                    ));
+                }
+            });
+            nouveauxUids.forEach(function (uid) {
+                if (uid && anciensUids.indexOf(uid) === -1) {
+                    operations.push(etiqueterErreur(
+                        ajusterCompteur(uid, 'victoires', 1),
+                        "ajout de la victoire au vainqueur (uid: " + uid + ")"
+                    ));
+                }
+            });
+
+            return operations;
+        }
+
         // Enregistre le vainqueur d'un tournoi terminé (admin uniquement) et met
-        // à jour automatiquement le compteur de victoires du joueur concerné
-        // (en gérant aussi le cas d'une correction : on retire la victoire à
-        // l'ancien vainqueur si l'admin change le résultat).
+        // à jour automatiquement le compteur de victoires de TOUS les membres de
+        // l'équipe gagnante (en gérant aussi le cas d'une correction : on retire
+        // la victoire à toute l'ancienne équipe si l'admin change le résultat).
+        // L'admin ne choisit qu'UN joueur dans la liste (celui-ci représente son
+        // équipe) : on retrouve ses éventuels coéquipiers via le champ "equipe"
+        // que chacun a choisi à l'inscription.
         function definirVainqueurTournoi(tournoiId, vainqueurUid, nomVainqueur, rafraichir) {
             if (!estAdmin()) {
                 alert("Seul l'administrateur peut renseigner le résultat d'un tournoi.");
@@ -3377,33 +5377,41 @@
             tournoisRef.child(tournoiId).once('value')
                 .then(function (snap) {
                     const t = snap.val() || {};
-                    const ancienUid = t.vainqueurUid || null;
                     const nomTournoi = t.nom || 'ce tournoi';
                     const inscrits = t.inscrits || {};
+                    const anciensUids = t.vainqueurUids || (t.vainqueurUid ? [t.vainqueurUid] : []);
+
+                    // Reconstitue toute l'équipe du vainqueur choisi : lui-même, plus
+                    // tout autre inscrit ayant choisi le même nom d'équipe. Si le
+                    // joueur n'a pas d'équipe (1v1, ou équipe non renseignée), seul
+                    // lui est crédité.
+                    let nouveauxUids = [];
+                    if (vainqueurUid) {
+                        const inscritVainqueur = inscrits[vainqueurUid] || {};
+                        const nomEquipeVainqueur = inscritVainqueur.equipe || null;
+                        const cleEquipeVainqueur = nomEquipeVainqueur ? cleNomEquipe(nomEquipeVainqueur) : null;
+                        nouveauxUids = cleEquipeVainqueur
+                            ? Object.keys(inscrits).filter(function (uid) { return cleNomEquipe(inscrits[uid].equipe) === cleEquipeVainqueur; })
+                            : [vainqueurUid];
+                    }
 
                     return etiqueterErreur(
-                        tournoisRef.child(tournoiId).update({ vainqueur: nomVainqueur, vainqueurUid: vainqueurUid || null }),
+                        tournoisRef.child(tournoiId).update({
+                            vainqueur: nomVainqueur,
+                            vainqueurUid: vainqueurUid || null,
+                            vainqueurUids: nouveauxUids.length ? nouveauxUids : null
+                        }),
                         "écriture du résultat sur le tournoi (tournois/" + tournoiId + ")"
                     )
                         .then(function () {
-                            const operations = [];
-                            if (ancienUid && ancienUid !== vainqueurUid) {
-                                operations.push(etiqueterErreur(
-                                    ajusterCompteur(ancienUid, 'victoires', -1),
-                                    "retrait de la victoire à l'ancien vainqueur (uid: " + ancienUid + ")"
-                                ));
-                            }
-                            if (vainqueurUid && vainqueurUid !== ancienUid) {
-                                operations.push(etiqueterErreur(
-                                    ajusterCompteur(vainqueurUid, 'victoires', 1),
-                                    "ajout de la victoire au nouveau vainqueur (uid: " + vainqueurUid + ")"
-                                ));
-                            }
+                            const operations = ajusterVictoiresEquipe(anciensUids, nouveauxUids);
 
                             // Confirme à chaque inscrit le résultat / sa position dans le classement
+                            // (tous les membres de l'équipe gagnante reçoivent bien le message
+                            // de félicitations, pas seulement le joueur sélectionné par l'admin)
                             Object.keys(inscrits).forEach(function (uid) {
-                                const texte = (uid === vainqueurUid)
-                                    ? 'Félicitations, tu es le grand vainqueur du tournoi "' + nomTournoi + '" !'
+                                const texte = (nouveauxUids.indexOf(uid) !== -1)
+                                    ? 'Félicitations, tu remportes le tournoi "' + nomTournoi + '" !'
                                     : 'Le tournoi "' + nomTournoi + '" est terminé. Résultat : ' + nomVainqueur + ' remporte la victoire.';
                                 operations.push(envoyerNotification(uid, texte, 'resultat'));
                             });
@@ -3424,10 +5432,12 @@
 
         // Parcourt les tournois dont la date/heure de début est passée et qui
         // n'ont pas encore été "traités" : pour chacun, crédite +1 "tournoi joué"
-        // à tous les inscrits à ce moment-là (donc pas ceux qui se sont désinscrits
-        // avant le début). Une transaction sur le drapeau "statsAppliquees" évite
-        // qu'un même tournoi soit compté deux fois si plusieurs utilisateurs
-        // ouvrent l'app en même temps.
+        // aux inscrits qui ont RÉELLEMENT joué (donc pas ceux qui se sont
+        // désinscrits avant le début, pas ceux exclus faute d'équipe complète,
+        // et personne du tout si le tournoi a été annulé faute de joueurs ou si
+        // aucun tirage n'a jamais été lancé). Une transaction sur le drapeau
+        // "statsAppliquees" évite qu'un même tournoi soit compté deux fois si
+        // plusieurs utilisateurs ouvrent l'app en même temps.
         function traiterParticipationsTournoisTermines() {
             tournoisRef.once('value').then(function (snapshot) {
                 const data = snapshot.val() || {};
@@ -3437,6 +5447,14 @@
                     const t = data[id];
                     const dateDebut = new Date(t.date + 'T' + (t.heure || '00:00'));
                     if (dateDebut > maintenant || t.statsAppliquees) return;
+                    // Aucun tirage n'a jamais été enregistré pour ce tournoi (pas assez
+                    // d'inscrits, admin n'a jamais lancé le tirage...) : personne n'a
+                    // encore joué, on ne crédite rien pour l'instant. On NE marque PAS
+                    // "traité" (contrairement au cas ci-dessous) : si l'admin lance le
+                    // tirage plus tard (après la date), ce tournoi doit pouvoir être
+                    // retraité correctement au prochain chargement au lieu de rester
+                    // bloqué à "jamais crédité".
+                    if (!t.premierTour) return;
 
                     tournoisRef.child(id).child('statsAppliquees').transaction(function (valeurActuelle) {
                         if (valeurActuelle) return; // déjà traité par un autre client : on abandonne
@@ -3444,10 +5462,17 @@
                     }).then(function (resultat) {
                         if (!resultat.committed || !resultat.snapshot.val()) return;
 
+                        // exclusUids : inscrits qui n'ont pas pu jouer faute d'équipe
+                        // complète, ou (pour un tournoi annulé) TOUS les inscrits — voir
+                        // lancerTirageAuSort() et declarerVainqueurUnique(), qui persistent
+                        // ce champ à chaque tirage.
+                        const exclus = t.exclusUids || [];
                         const inscrits = t.inscrits || {};
-                        const operations = Object.keys(inscrits).map(function (uid) {
-                            return ajusterCompteur(uid, 'tournoisJoues', 1);
-                        });
+                        const operations = Object.keys(inscrits)
+                            .filter(function (uid) { return exclus.indexOf(uid) === -1; })
+                            .map(function (uid) {
+                                return ajusterCompteur(uid, 'tournoisJoues', 1);
+                            });
 
                         // Si une ou plusieurs mises à jour de compteur échouent (règles
                         // Firebase, réseau, etc.), on remet le drapeau à false pour que
@@ -3469,6 +5494,72 @@
         }
 
         // Gère l'inscription/désinscription à un tournoi (réutilisé sur les deux pages)
+        // Inscrit réellement l'utilisateur courant à un tournoi (écriture Firebase +
+        // notification). "nomEquipe" est optionnel : renseigné uniquement pour les
+        // tournois joués en équipe (2v2, 3v3, y compris en mode aléatoire).
+        // Inscrit réellement l'utilisateur courant à un tournoi. La vérification
+        // de place (et de taille d'équipe le cas échéant) et l'écriture sont
+        // faites en une seule transaction Firebase sur le nœud "inscrits" :
+        // Firebase rejoue la fonction avec la valeur la plus récente du serveur
+        // en cas d'écriture concurrente, donc deux joueurs qui cliquent au même
+        // instant ne peuvent plus dépasser le max ni surcharger une équipe.
+        // "tailleEquipe" est optionnel : à fournir uniquement quand "nomEquipe"
+        // est renseigné, pour vérifier que l'équipe n'est pas déjà complète.
+        function inscrireJoueur(tournoiId, t, nomEquipe, tailleEquipe) {
+            const monUid = window.currentUser.uid;
+            const inscritsRef = tournoisRef.child(tournoiId).child('inscrits');
+            const nomTournoi = t.nom || 'ce tournoi';
+            const nomEquipeNettoye = nomEquipe ? nettoyerNomEquipe(nomEquipe) : null;
+
+            const donnees = {
+                name: window.currentUser.name || window.currentUser.email || 'Joueur',
+                tag: window.currentUser.tag || '',
+                identifiant: window.currentUser.identifiant || ''
+            };
+            if (nomEquipeNettoye) donnees.equipe = nomEquipeNettoye;
+
+            return inscritsRef.transaction(function (inscrits) {
+                inscrits = inscrits || {};
+
+                // Déjà inscrit (ex. double clic) : on n'écrit rien de plus.
+                if (inscrits[monUid]) return;
+
+                const max = parseInt(t.participants, 10);
+                if (!isNaN(max) && Object.keys(inscrits).length >= max) {
+                    return; // tournoi complet -> on abandonne la transaction
+                }
+
+                if (nomEquipeNettoye && tailleEquipe > 1) {
+                    // Comparaison normalisée (espaces/casse ignorés) : ça évite
+                    // qu'une équipe "Team A" et une équipe "team a" créées en
+                    // même temps par deux joueurs différents ne soient comptées
+                    // comme deux équipes distinctes, même sous concurrence.
+                    const cible = cleNomEquipe(nomEquipeNettoye);
+                    const membresEquipe = Object.keys(inscrits).filter(function (uid) {
+                        return inscrits[uid] && cleNomEquipe(inscrits[uid].equipe) === cible;
+                    });
+                    if (membresEquipe.length >= tailleEquipe) {
+                        return; // équipe complète -> on abandonne la transaction
+                    }
+                    // Aligne le nom stocké sur celui déjà utilisé par l'équipe
+                    // (premier membre), pour garder un nom canonique unique.
+                    if (membresEquipe.length > 0) {
+                        donnees.equipe = inscrits[membresEquipe[0]].equipe;
+                    }
+                }
+
+                inscrits[monUid] = donnees;
+                return inscrits;
+            }).then(function (result) {
+                if (!result.committed) {
+                    throw new Error('PLACE_INDISPONIBLE');
+                }
+                const quandTexte = t.date ? ' (' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + ')' : '';
+                const equipeTexte = nomEquipeNettoye ? ' dans l\'équipe "' + (donnees.equipe || nomEquipeNettoye) + '"' : '';
+                return envoyerNotification(monUid, 'Inscription confirmée pour le tournoi "' + nomTournoi + '"' + equipeTexte + quandTexte + '.', 'inscription');
+            });
+        }
+
         function gererInscription(tournoiId, btn, rafraichir) {
             if (!window.currentUser) {
                 alert("Connecte-toi d'abord (bouton Compte) pour pouvoir t'inscrire à un tournoi.");
@@ -3493,29 +5584,38 @@
                                     return envoyerNotification(monUid, 'Désinscription confirmée pour le tournoi "' + nomTournoi + '".', 'desinscription');
                                 });
                             } else {
-                                // Pas encore inscrit : on vérifie la place puis on inscrit
+                                // Pas encore inscrit : cette lecture ne sert qu'à afficher la
+                                // fenêtre de choix d'équipe (liste des équipes existantes) ;
+                                // la vérification de place réelle et l'écriture se font de
+                                // façon atomique dans inscrireJoueur (transaction Firebase),
+                                // donc pas de dépassement possible même en cas de clics
+                                // simultanés de plusieurs joueurs.
                                 return tournoisRef.child(tournoiId).child('inscrits').once('value').then(function (inscritsSnap) {
                                     const inscrits = inscritsSnap.val() || {};
-                                    return tournoisRef.child(tournoiId).child('participants').once('value').then(function (maxSnap) {
-                                        const max = parseInt(maxSnap.val(), 10);
-                                        if (Object.keys(inscrits).length >= max) {
+                                    const tailleEquipe = tailleEquipeDuTournoi(t.nom);
+
+                                    if (tailleEquipe > 1) {
+                                        // Tournoi en équipe (2v2, 3v3...) : on laisse le joueur
+                                        // choisir son équipe (ou en créer une) dans une fenêtre
+                                        // dédiée, plutôt que de l'inscrire directement.
+                                        ouvrirModalEquipe(tournoiId, t, inscrits, tailleEquipe, rafraichir);
+                                        return 'modal-ouvert';
+                                    }
+
+                                    return inscrireJoueur(tournoiId, t, null, tailleEquipe).catch(function (error) {
+                                        if (error && error.message === 'PLACE_INDISPONIBLE') {
                                             alert('Ce tournoi est complet.');
                                             return;
                                         }
-                                        return inscritRef.set({
-                                            name: window.currentUser.name || window.currentUser.email || 'Joueur',
-                                            tag: window.currentUser.tag || '',
-                                            identifiant: window.currentUser.identifiant || ''
-                                        }).then(function () {
-                                            const quandTexte = t.date ? ' (' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + ')' : '';
-                                            return envoyerNotification(monUid, 'Inscription confirmée pour le tournoi "' + nomTournoi + '"' + quandTexte + '.', 'inscription');
-                                        });
+                                        throw error;
                                     });
                                 });
                             }
                         });
                 })
-                .then(function () {
+                .then(function (resultat) {
+                    btn.disabled = false;
+                    if (resultat === 'modal-ouvert') return;
                     rafraichir();
                 })
                 .catch(function (error) {
@@ -3524,6 +5624,174 @@
                     btn.disabled = false;
                 });
         }
+
+        // Ouvre la fenêtre de choix d'équipe pour un tournoi joué en équipe.
+        // Affiche les équipes déjà existantes (avec leurs membres et la place
+        // restante) et permet d'en créer une nouvelle en la nommant.
+        function ouvrirModalEquipe(tournoiId, t, inscrits, tailleEquipe, rafraichir) {
+            equipeModalContexte = { tournoiId: tournoiId, tournoi: t, tailleEquipe: tailleEquipe, rafraichir: rafraichir };
+            equipeErreur.textContent = '';
+            equipeNomInput.value = '';
+
+            // clé normalisée -> { nom affiché, membres }. Regrouper sur une clé
+            // normalisée évite que "Team A" / "team a" / " Team A " ne soient
+            // comptées comme 3 équipes différentes.
+            const groupes = {};
+            Object.keys(inscrits).forEach(function (uid) {
+                const insc = inscrits[uid] || {};
+                const nomEquipe = nettoyerNomEquipe(insc.equipe);
+                if (!nomEquipe) return;
+                const cle = cleNomEquipe(nomEquipe);
+                if (!groupes[cle]) groupes[cle] = { nom: nomEquipe, membres: [] };
+                groupes[cle].membres.push(insc.name || 'Joueur');
+            });
+
+            // Mémorisé pour que le bouton "Créer" puisse rejoindre l'équipe
+            // existante (avec son nom canonique) si le nom saisi correspond,
+            // à la casse/aux espaces près, à une équipe déjà créée.
+            equipeModalContexte.nomsEquipesConnus = {};
+            Object.keys(groupes).forEach(function (cle) {
+                equipeModalContexte.nomsEquipesConnus[cle] = groupes[cle].nom;
+            });
+
+            const clesEquipes = Object.keys(groupes);
+            equipeInfo.textContent = 'Ce tournoi se joue en équipes de ' + tailleEquipe + ' joueurs. Rejoins une équipe existante ou crée la tienne ci-dessous.';
+
+            if (clesEquipes.length === 0) {
+                equipeListe.innerHTML = '<p style="text-align:center; color:#777; margin-bottom:0.6rem;">Aucune équipe pour l\'instant : sois le premier à en créer une !</p>';
+            } else {
+                equipeListe.innerHTML = clesEquipes.map(function (cle) {
+                    const groupe = groupes[cle];
+                    const nom = groupe.nom;
+                    const membres = groupe.membres;
+                    const complete = membres.length >= tailleEquipe;
+                    return '<div class="equipe-item' + (complete ? ' equipe-item-complete' : '') + '">' +
+                        '<div>' +
+                            '<div class="equipe-item-nom">' + echapperHTML(nom) + '</div>' +
+                            '<div class="equipe-item-membres">' + membres.map(echapperHTML).join(', ') + ' (' + membres.length + '/' + tailleEquipe + ')</div>' +
+                        '</div>' +
+                        '<button type="button" class="equipe-rejoindre-btn" data-nom="' + echapperHTML(nom) + '"' + (complete ? ' disabled' : '') + '>' + (complete ? 'Complète' : 'Rejoindre') + '</button>' +
+                        '</div>';
+                }).join('');
+            }
+
+            equipeOverlay.classList.remove('hidden');
+        }
+
+        function fermerModalEquipe() {
+            equipeOverlay.classList.add('hidden');
+            equipeModalContexte = null;
+            equipeErreur.textContent = '';
+        }
+
+        // Finalise l'inscription du joueur dans l'équipe choisie (existante ou
+        // nouvelle). La vérification de place (tournoi complet / équipe déjà
+        // complète) et l'écriture sont faites en une seule transaction Firebase
+        // dans inscrireJoueur, ce qui supprime la fenêtre entre lecture et
+        // écriture où deux joueurs pouvaient rejoindre la même place en même
+        // temps.
+        function rejoindreEquipe(nomEquipe) {
+            if (!equipeModalContexte) return;
+            const tournoiId = equipeModalContexte.tournoiId;
+            const tournoi = equipeModalContexte.tournoi;
+            const tailleEquipe = equipeModalContexte.tailleEquipe;
+            const rafraichir = equipeModalContexte.rafraichir;
+
+            equipeErreur.textContent = '';
+
+            inscrireJoueur(tournoiId, tournoi, nomEquipe, tailleEquipe)
+                .then(function () {
+                    fermerModalEquipe();
+                    rafraichir();
+                })
+                .catch(function (error) {
+                    if (error && error.message === 'PLACE_INDISPONIBLE') {
+                        equipeErreur.textContent = 'Ce tournoi ou cette équipe est complet(ète). Choisis-en une autre, ou crée la tienne.';
+                        return;
+                    }
+                    console.error('Erreur Firebase :', error);
+                    equipeErreur.textContent = "Erreur lors de l'inscription : " + error.message;
+                });
+        }
+
+        equipeListe.addEventListener('click', function (e) {
+            const rejoindreBtn = e.target.closest('.equipe-rejoindre-btn');
+            if (rejoindreBtn && !rejoindreBtn.disabled) {
+                rejoindreEquipe(rejoindreBtn.dataset.nom);
+            }
+        });
+
+        equipeCreerBtn.addEventListener('click', function () {
+            if (!equipeModalContexte) return;
+            const nom = nettoyerNomEquipe(equipeNomInput.value);
+            if (!nom) {
+                equipeErreur.textContent = 'Merci de choisir un nom pour ta nouvelle équipe.';
+                return;
+            }
+
+            // Si une équipe du même nom existe déjà (à la casse/aux espaces
+            // près), on rejoint cette équipe existante avec son nom canonique
+            // plutôt que d'en créer une nouvelle : ça évite que "Team A",
+            // "team a" et " Team A " ne deviennent 3 équipes différentes.
+            const nomsConnus = equipeModalContexte.nomsEquipesConnus || {};
+            const nomExistant = nomsConnus[cleNomEquipe(nom)];
+            rejoindreEquipe(nomExistant || nom);
+        });
+
+        equipeAnnulerBtn.addEventListener('click', fermerModalEquipe);
+
+        equipeOverlay.addEventListener('click', function (e) {
+            if (e.target === equipeOverlay) fermerModalEquipe();
+        });
+
+        // Construit un lien direct vers un tournoi précis et le partage :
+        // - sur mobile, ouvre le menu de partage natif (WhatsApp, Discord, SMS...)
+        // - sinon, copie le lien dans le presse-papiers
+        function partagerTournoi(tournoiId, nomTournoi) {
+            const lien = window.location.origin + window.location.pathname + '?tournoi=' + encodeURIComponent(tournoiId);
+            const texte = 'Rejoins-moi pour le tournoi "' + nomTournoi + '" !';
+
+            if (navigator.share) {
+                navigator.share({ title: 'Tournois Brawl Stars', text: texte, url: lien }).catch(function () {
+                    // L'utilisateur a simplement annulé le partage : rien à faire
+                });
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(lien)
+                    .then(function () { alert('Lien copié ! Tu peux maintenant le coller pour l\'envoyer à tes amis.'); })
+                    .catch(function () { prompt('Copie ce lien pour l\'envoyer à tes amis :', lien); });
+            } else {
+                prompt('Copie ce lien pour l\'envoyer à tes amis :', lien);
+            }
+        }
+
+        // Si on arrive sur la page via un lien de tournoi partagé, on fait défiler
+        // jusqu'à la carte correspondante et on la met en surbrillance quelques secondes.
+        function verifierLienTournoiCible() {
+            if (!tournoiCibleDepuisLien) return;
+            const idCible = tournoiCibleDepuisLien;
+            tournoiCibleDepuisLien = null; // ne se déclenche qu'une seule fois
+
+            // On nettoie l'URL pour ne pas re-déclencher le surlignage à un rafraîchissement
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+
+            setTimeout(function () {
+                const carte = document.getElementById('tournoi-card-' + idCible);
+                if (!carte) return;
+                carte.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                carte.classList.add('tournoi-cible-surbrillance');
+                setTimeout(function () { carte.classList.remove('tournoi-cible-surbrillance'); }, 2500);
+            }, 150);
+        }
+
+        // Liste brute (non filtrée) des tournois à venir, mise en cache après
+        // chaque chargement pour pouvoir réappliquer les filtres instantanément
+        // (recherche par date, mode de jeu, places restantes) sans requête réseau.
+        let tournoisAVenirCache = [];
 
         function afficherTournois() {
             afficherPage(tournoisPage);
@@ -3559,23 +5827,72 @@
                             return new Date(b.date + 'T' + (b.heure || '00:00')) - new Date(a.date + 'T' + (a.heure || '00:00'));
                         });
 
-                    if (aVenir.length === 0) {
-                        tournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
-                    } else {
-                        tournoisList.innerHTML = aVenir.map(function (t) { return genererCarteTournoiHTML(t, true); }).join('');
-                    }
+                    tournoisAVenirCache = aVenir;
+                    appliquerFiltresTournois();
 
                     if (termines.length === 0) {
                         tournoisTerminesList.innerHTML = '<p style="text-align:center;">Aucun tournoi terminé pour le moment.</p>';
                     } else {
                         tournoisTerminesList.innerHTML = termines.map(function (t) { return genererCarteTournoiTermineHTML(t); }).join('');
                     }
+
+                    verifierLienTournoiCible();
                 })
                 .catch(function (error) {
                     console.error('Erreur Firebase :', error);
                     tournoisList.innerHTML = '<p style="text-align:center;">Erreur de chargement des tournois.</p>';
                     tournoisTerminesList.innerHTML = '';
                 });
+        }
+
+        // --- Filtre de recherche des tournois à venir (mode de jeu, date, places restantes) ---
+        const filtreModeSelect = document.getElementById('filtre-mode');
+        const filtreDateInput = document.getElementById('filtre-date');
+        const filtrePlacesSelect = document.getElementById('filtre-places');
+        const filtreReinitialiserBtn = document.getElementById('filtre-reinitialiser-btn');
+
+        // Réapplique les filtres actuellement sélectionnés sur la liste en cache
+        // et réaffiche le résultat (groupé par jour), sans recharger Firebase.
+        function appliquerFiltresTournois() {
+            const modeChoisi = filtreModeSelect ? filtreModeSelect.value : '';
+            const dateChoisie = filtreDateInput ? filtreDateInput.value : '';
+            const placesChoisies = filtrePlacesSelect ? filtrePlacesSelect.value : '';
+
+            const filtres = tournoisAVenirCache.filter(function (t) {
+                if (modeChoisi && t.nom !== modeChoisi) return false;
+                if (dateChoisie && t.date < dateChoisie) return false;
+
+                if (placesChoisies) {
+                    const inscrits = t.inscrits || {};
+                    const nbInscrits = Object.keys(inscrits).length;
+                    const max = parseInt(t.participants, 10);
+                    const placesRestantes = isNaN(max) ? Infinity : max - nbInscrits;
+                    if (placesChoisies === 'disponibles' && placesRestantes <= 0) return false;
+                    if (placesChoisies === 'presque-complet' && (placesRestantes <= 0 || placesRestantes > 2)) return false;
+                }
+
+                return true;
+            });
+
+            if (tournoisAVenirCache.length === 0) {
+                tournoisList.innerHTML = '<p style="text-align:center;">Aucun tournoi à venir pour le moment.</p>';
+            } else if (filtres.length === 0) {
+                tournoisList.innerHTML = '<p class="filtre-aucun-resultat">Aucun tournoi ne correspond à ces filtres.</p>';
+            } else {
+                tournoisList.innerHTML = genererCalendrierTournoisHTML(filtres, true);
+            }
+        }
+
+        if (filtreModeSelect) filtreModeSelect.addEventListener('change', appliquerFiltresTournois);
+        if (filtreDateInput) filtreDateInput.addEventListener('change', appliquerFiltresTournois);
+        if (filtrePlacesSelect) filtrePlacesSelect.addEventListener('change', appliquerFiltresTournois);
+        if (filtreReinitialiserBtn) {
+            filtreReinitialiserBtn.addEventListener('click', function () {
+                if (filtreModeSelect) filtreModeSelect.value = '';
+                if (filtreDateInput) filtreDateInput.value = '';
+                if (filtrePlacesSelect) filtrePlacesSelect.value = '';
+                appliquerFiltresTournois();
+            });
         }
 
         tournoisBtn.addEventListener('click', afficherTournois);
@@ -3613,6 +5930,11 @@
             const inscritBtn = e.target.closest('.inscrit-btn');
             if (inscritBtn && !inscritBtn.disabled) {
                 gererInscription(inscritBtn.dataset.id, inscritBtn, afficherTournois);
+                return;
+            }
+            const partagerBtn = e.target.closest('.partager-btn');
+            if (partagerBtn) {
+                partagerTournoi(partagerBtn.dataset.id, partagerBtn.dataset.nom);
                 return;
             }
             const tirageBtn = e.target.closest('.tirage-btn');
@@ -3677,6 +5999,7 @@
             const date = tDateInput.value;
             const heure = tHeureInput.value;
             const participants = tParticipantsInput.value.trim();
+            const description = tDescriptionInput.value.trim();
 
             if (!nom || !date || !heure || !participants) {
                 alert('Merci de remplir tous les champs du tournoi.');
@@ -3686,10 +6009,21 @@
             tSubmitBtn.disabled = true;
             tSubmitBtn.textContent = 'Ajout...';
 
-            tournoisRef.push({ nom, date, heure, participants })
-                .then(function () {
+            tournoisRef.push({ nom, date, heure, participants, description })
+                .then(function (ref) {
+                    envoyerAnnonceDiscord({
+                        title: '🏆 Nouveau tournoi : ' + nom,
+                        description: (description || 'Inscris-toi vite, les places sont limitées !'),
+                        color: 2521598,
+                        fields: [
+                            { name: '📅 Date', value: date + ' à ' + heure, inline: true },
+                            { name: '👥 Participants max', value: String(participants), inline: true }
+                        ],
+                        footer: { text: 'Inscris-toi sur le site des tournois Brawl Stars' }
+                    });
                     tDateInput.value = '';
                     tHeureInput.value = '';
+                    tDescriptionInput.value = '';
                     majOptionsParticipants();
                     adminAddForm.classList.add('hidden');
                     afficherTournois();
@@ -3710,6 +6044,155 @@
 
         // Affiche les tournois à venir dès l'ouverture de la page
         afficherTournoisAccueil();
+
+        // Si l'utilisateur arrive via un lien de tournoi partagé (?tournoi=ID),
+        // on l'amène directement sur la page Tournois plutôt que sur l'Accueil
+        if (tournoiCibleDepuisLien) {
+            afficherTournois();
+        }
+
+        // Enregistrement du service worker : rend le site installable en PWA
+        // et lui permet de garder l'app shell disponible hors-ligne.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .catch(function (error) {
+                        console.error('Erreur enregistrement du service worker :', error);
+                    });
+            });
+        }
+
+        // Gestion du bouton "Installer l'app" : le navigateur ne propose
+        // l'installation que si les critères PWA sont remplis (manifest,
+        // service worker, HTTPS). On garde l'événement pour pouvoir déclencher
+        // le prompt nous-mêmes, au clic sur notre propre bouton.
+        let evenementInstallDiffere = null;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', function (event) {
+            event.preventDefault();
+            evenementInstallDiffere = event;
+            installBtn.classList.remove('hidden');
+        });
+
+        installBtn.addEventListener('click', function () {
+            if (!evenementInstallDiffere) return;
+            evenementInstallDiffere.prompt();
+            evenementInstallDiffere.userChoice.finally(function () {
+                evenementInstallDiffere = null;
+                installBtn.classList.add('hidden');
+            });
+        });
+
+        // Une fois l'app installée (par ce bouton ou autrement), on cache le bouton.
+        window.addEventListener('appinstalled', function () {
+            installBtn.classList.add('hidden');
+        });
+
+        // ============================================================
+        // Notifications PUSH (via Firebase Cloud Messaging + service worker)
+        // ------------------------------------------------------------
+        // IMPORTANT : pour que l'envoi réel de push fonctionne (recevoir une
+        // notification même app fermée), il faut en plus :
+        //   1) Générer une clé VAPID dans la Console Firebase
+        //      (Paramètres du projet > Cloud Messaging > Certificats web push)
+        //      et la coller ci-dessous à la place de "COLLE_TA_CLE_VAPID_ICI".
+        //   2) Mettre en place une Cloud Function (ou tout backend) qui,
+        //      quand une notification est ajoutée dans notifications/{uid},
+        //      lit les jetons dans fcmTokens/{uid} et appelle
+        //      admin.messaging().sendToDevice(...) pour déclencher réellement
+        //      l'envoi au téléphone/navigateur, y compris app fermée.
+        //      Sans backend, ce code gère la permission, le jeton et
+        //      l'affichage au premier plan, mais pas l'envoi hors-ligne.
+        // ============================================================
+        const VAPID_KEY = 'COLLE_TA_CLE_VAPID_ICI';
+        const pushActiverBtn = document.getElementById('push-activer-btn');
+        const pushStatutEl = document.getElementById('push-statut');
+        let messagingInstance = null;
+
+        function messagingDisponible() {
+            return 'Notification' in window && 'serviceWorker' in navigator && firebase.messaging && firebase.messaging.isSupported && firebase.messaging.isSupported();
+        }
+
+        function majAffichagePush() {
+            if (!pushActiverBtn) return;
+            if (!messagingDisponible()) {
+                pushActiverBtn.classList.add('hidden');
+                if (pushStatutEl) pushStatutEl.textContent = "Les notifications push ne sont pas prises en charge par ce navigateur.";
+                return;
+            }
+            if (Notification.permission === 'granted') {
+                pushActiverBtn.classList.add('hidden');
+                if (pushStatutEl) pushStatutEl.textContent = '🔔 Notifications push activées sur cet appareil.';
+            } else if (Notification.permission === 'denied') {
+                pushActiverBtn.classList.add('hidden');
+                if (pushStatutEl) pushStatutEl.textContent = 'Notifications bloquées : autorise-les dans les réglages de ton navigateur pour les recevoir.';
+            } else {
+                pushActiverBtn.classList.remove('hidden');
+                if (pushStatutEl) pushStatutEl.textContent = '';
+            }
+        }
+
+        // Enregistre le jeton FCM de cet appareil dans la base, pour qu'un
+        // futur backend (Cloud Function) puisse lui envoyer des push
+        function enregistrerJetonPush() {
+            if (!window.currentUser || !messagingDisponible()) return;
+
+            if (!messagingInstance) {
+                messagingInstance = firebase.messaging();
+            }
+
+            navigator.serviceWorker.ready.then(function (registration) {
+                return messagingInstance.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+            }).then(function (token) {
+                if (!token) return;
+                return fcmTokensRef.child(window.currentUser.uid).child(token).set(true);
+            }).catch(function (error) {
+                console.error('Erreur récupération jeton FCM (as-tu bien renseigné VAPID_KEY ?) :', error);
+            });
+        }
+
+        if (pushActiverBtn) {
+            pushActiverBtn.addEventListener('click', function () {
+                if (!messagingDisponible()) return;
+                Notification.requestPermission().then(function (permission) {
+                    majAffichagePush();
+                    if (permission === 'granted') {
+                        enregistrerJetonPush();
+                    }
+                });
+            });
+        }
+
+        // Affiche une notification au premier plan (onglet ouvert) : Firebase
+        // n'affiche pas automatiquement de notification système quand l'app
+        // a le focus, donc on la construit nous-mêmes à partir du message reçu.
+        if (messagingDisponible()) {
+            try {
+                messagingInstance = firebase.messaging();
+                messagingInstance.onMessage(function (payload) {
+                    const titre = (payload.notification && payload.notification.title) || 'Tournois Brawl Stars';
+                    const corps = (payload.notification && payload.notification.body) || (payload.data && payload.data.texte) || '';
+                    if (Notification.permission === 'granted') {
+                        try {
+                            new Notification(titre, { body: corps, icon: 'icon-192.png' });
+                        } catch (error) {
+                            console.error('Erreur affichage notification premier plan :', error);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur initialisation Firebase Messaging :', error);
+            }
+        }
+
+        // Re-vérifie l'état de la permission et (ré)enregistre le jeton à chaque connexion
+        auth.onAuthStateChanged(function (user) {
+            majAffichagePush();
+            if (user && Notification && Notification.permission === 'granted') {
+                enregistrerJetonPush();
+            }
+        });
     </script>
 
 </body>
