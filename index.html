@@ -45,23 +45,45 @@
 
         nav {
             display: flex;
-            justify-content: center;
-            gap: 1rem;
-            padding: 1.5rem;
+            flex-wrap: nowrap;
+            gap: 0.25rem;
+            padding: 0.5rem 0.35rem;
             background: rgba(0, 0, 0, 0.15);
-            flex-wrap: wrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         nav button {
-            padding: 0.7rem 1.6rem;
+            flex: 1 1 0;
+            min-width: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.1rem;
+            padding: 0.4rem 0.15rem;
             border: none;
-            border-radius: 999px;
-            font-size: 1rem;
-            font-weight: 600;
+            border-radius: 10px;
             cursor: pointer;
             background: white;
             color: #2575fc;
             transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        nav .nav-icone {
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        nav .nav-label {
+            font-size: 0.52rem;
+            font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         nav button:hover {
@@ -1877,11 +1899,6 @@
                 <a href="https://www.tiktok.com/@equinoxx_winstreak?_r=1&_t=ZN-97tlLD5pqQY" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Voir le profil</a>
             </div>
             <div class="tournoi-card">
-                <h3>📸 Instagram</h3>
-                <p>Suis le compte pour les photos et annonces des tournois.</p>
-                <a href="https://www.instagram.com/TON_PSEUDO_ICI" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Voir le profil</a>
-            </div>
-            <div class="tournoi-card">
                 <h3>⭐ Ajoute-moi sur Brawl Stars</h3>
                 <p>Ajoute-moi en ami directement dans le jeu.</p>
                 <a href="https://link.brawlstars.com/invite/friend/en/?tag=2ULRVCY2V" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Ajouter en ami</a>
@@ -1918,14 +1935,14 @@
     </main>
 
     <nav>
-        <button id="accueil-btn">Accueil</button>
-        <button id="compte-btn">Compte</button>
-        <button id="message-btn">Message<span class="badge hidden" id="message-badge">0</span></button>
-        <button id="notifications-btn">Boîte<span class="badge hidden" id="notifications-badge">0</span></button>
-        <button id="amis-btn">Amis</button>
-        <button id="tournois-btn">Tournois</button>
-        <button id="liens-btn">Liens</button>
-        <button id="install-btn" class="hidden">📲 Installer l'app</button>
+        <button id="accueil-btn"><span class="nav-icone">🏠</span><span class="nav-label">Accueil</span></button>
+        <button id="compte-btn"><span class="nav-icone">👤</span><span class="nav-label">Compte</span></button>
+        <button id="message-btn"><span class="nav-icone">💬</span><span class="nav-label">Message</span><span class="badge hidden" id="message-badge">0</span></button>
+        <button id="notifications-btn"><span class="nav-icone">📥</span><span class="nav-label">Boîte</span><span class="badge hidden" id="notifications-badge">0</span></button>
+        <button id="amis-btn"><span class="nav-icone">👥</span><span class="nav-label">Amis</span></button>
+        <button id="tournois-btn"><span class="nav-icone">🏆</span><span class="nav-label">Tournois</span></button>
+        <button id="liens-btn"><span class="nav-icone">🔗</span><span class="nav-label">Liens</span></button>
+        <button id="install-btn" class="hidden"><span class="nav-icone">📲</span><span class="nav-label">Installer</span></button>
     </nav>
 
     <!-- Firebase SDK (compat, simple à utiliser sans outil de build) -->
