@@ -19,7 +19,20 @@
     <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 
     <title>Tournois Brawl Stars</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --violet-profond: #4a0f8f;
+            --violet: #6a11cb;
+            --bleu: #2575fc;
+            --jaune-eclat: #ffc93c;
+            --encre: #1c1440;
+            --carte: #ffffff;
+            --texte-carte: #2b2540;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -30,9 +43,23 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background:
+                radial-gradient(circle at 12% 8%, rgba(255, 201, 60, 0.28), transparent 42%),
+                radial-gradient(circle at 88% 82%, rgba(37, 117, 252, 0.35), transparent 45%),
+                linear-gradient(160deg, var(--violet-profond) 0%, var(--violet) 45%, var(--bleu) 100%);
+            background-attachment: fixed;
             color: white;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Baloo 2', 'Inter', sans-serif;
+        }
+
+        h1 {
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: 0.01em;
         }
 
         main {
@@ -48,7 +75,10 @@
             flex-wrap: nowrap;
             gap: 0.25rem;
             padding: 0.5rem 0.35rem;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(20, 10, 50, 0.55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.25);
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
@@ -64,11 +94,17 @@
             gap: 0.1rem;
             padding: 0.4rem 0.15rem;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
-            background: white;
-            color: #2575fc;
-            transition: transform 0.15s ease, background 0.15s ease;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.85);
+            transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+        }
+
+        nav button:hover,
+        nav button:focus-visible {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
         }
 
         nav .nav-icone {
@@ -86,13 +122,8 @@
             max-width: 100%;
         }
 
-        nav button:hover {
-            background: #f0f0f0;
-            transform: translateY(-2px);
-        }
-
         nav button:active {
-            transform: translateY(0);
+            transform: scale(0.96);
         }
 
         .overlay {
@@ -267,7 +298,24 @@
 
         .tournois-container h2 {
             text-align: center;
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.4rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            position: relative;
+            padding-bottom: 0.6rem;
+        }
+
+        .tournois-container h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 46px;
+            height: 4px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--jaune-eclat), var(--bleu));
         }
 
         .calendrier-jour-entete {
@@ -286,17 +334,30 @@
         }
 
         .tournoi-card {
-            background: white;
-            color: #333;
-            border-radius: 12px;
-            padding: 1rem 1.2rem;
-            margin-bottom: 0.8rem;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+            position: relative;
+            background: var(--carte);
+            color: var(--texte-carte);
+            border-radius: 16px;
+            padding: 1.1rem 1.2rem 1.2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 22px rgba(15, 5, 40, 0.28);
+            overflow: hidden;
+        }
+
+        .tournoi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--jaune-eclat), var(--violet) 55%, var(--bleu));
         }
 
         .tournoi-card h3 {
-            color: #2575fc;
+            color: var(--violet);
             margin-bottom: 0.3rem;
+            font-size: 1.15rem;
         }
 
         .tournoi-card p {
@@ -308,18 +369,26 @@
         .inscrit-btn {
             margin-top: 0.6rem;
             width: 100%;
-            padding: 0.55rem;
+            padding: 0.6rem;
             border: none;
             border-radius: 999px;
             background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             color: white;
             font-size: 0.9rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 117, 252, 0.35);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
         }
 
         .inscrit-btn:hover {
-            opacity: 0.9;
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .inscrit-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(37, 117, 252, 0.35);
         }
 
         .inscrit-btn.deja-inscrit {
