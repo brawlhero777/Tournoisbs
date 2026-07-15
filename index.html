@@ -178,6 +178,16 @@
             max-width: 500px;
         }
 
+        .admin-stats-panel {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
         .filtre-tournois-panel {
             display: flex;
             flex-wrap: wrap;
@@ -892,6 +902,22 @@
             font-weight: 600;
             cursor: pointer;
             padding: 0;
+        }
+
+        .notification-card .notif-lien-btn {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.45rem 0.9rem;
+            border-radius: 999px;
+            background: #5865f2;
+            color: white;
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .notification-card .notif-lien-btn:hover {
+            opacity: 0.9;
         }
 
         .chat-message.mine .horodatage {
@@ -1664,6 +1690,8 @@
         <div class="tournois-container">
             <h1 id="welcome" style="text-align:center; margin-bottom:1.5rem;">Ma page</h1>
 
+            <div id="admin-stats-panel" class="admin-stats-panel hidden">👥 <span id="admin-nb-comptes">0</span> comptes créés sur l'application</div>
+
             <div class="recherche-joueur-panel">
                 <h2 style="margin-bottom:0.8rem;">Rechercher un joueur</h2>
                 <div class="nouvelle-conv-row">
@@ -1841,7 +1869,7 @@
             <div class="tournoi-card">
                 <h3>💬 Discord</h3>
                 <p>Rejoins le serveur pour discuter et suivre les annonces.</p>
-                <a href="https://discord.gg/BQSGP5pmt" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Rejoindre</a>
+                <a href="https://discord.gg/JeR828Qcv" target="_blank" rel="noopener noreferrer" class="inscrit-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Rejoindre</a>
             </div>
             <div class="tournoi-card">
                 <h3>🎵 TikTok</h3>
@@ -1930,6 +1958,7 @@
         const comptesRef = db.ref('comptes');
         const pseudosRef = db.ref('pseudos'); // index public tag/identifiant Supercell -> {uid, name}, pour retrouver un utilisateur en message privé
         const joueursRef = db.ref('joueurs'); // annuaire public des joueurs (name, tag, identifiant) pour la recherche sur l'Accueil
+        const configRef = db.ref('config'); // config/adminUid : petit index public permettant de savoir où envoyer les notifications destinées à l'admin
         const amisRef = db.ref('amis'); // amis/{monUid}/{autreUid} = { name, since }
         const suivisRef = db.ref('suivis'); // suivis/{monUid}/{autreUid} = { name, since } : abonnement à sens unique (suivre un joueur)
         const fcmTokensRef = db.ref('fcmTokens'); // fcmTokens/{uid}/{token} = true : jetons d'appareils pour les notifications push
@@ -2060,7 +2089,18 @@
                     demarrerSuiviBadgeNotifications();
                     traiterParticipationsTournoisTermines();
                     verifierRappelsAutomatiques();
+                    nettoyerAncienMessages();
                     demarrerRappelsAutomatiques();
+
+                    if (estAdmin()) {
+                        // S'enregistre comme destinataire des notifications admin (nouveaux comptes...)
+                        configRef.child('adminUid').set(user.uid).catch(function (error) {
+                            console.error('Erreur enregistrement adminUid :', error);
+                        });
+                        afficherStatsAdmin();
+                    } else {
+                        document.getElementById('admin-stats-panel').classList.add('hidden');
+                    }
                 });
             } else {
                 window.currentUser = null;
@@ -2181,6 +2221,18 @@
                         welcome.textContent = `Bienvenue, ${name} !`;
                         overlay.classList.add('hidden');
                         afficherTournoisAccueil();
+
+                        // Prévient l'admin dans sa boîte de réception qu'un nouveau compte a été créé
+                        if (email.trim().toLowerCase() !== ADMIN_EMAIL) {
+                            configRef.child('adminUid').once('value').then(function (snap) {
+                                const adminUid = snap.val();
+                                if (adminUid) {
+                                    envoyerNotification(adminUid, '🆕 Nouveau compte créé : ' + name + ' (' + email + ')', 'inscription-compte');
+                                }
+                            }).catch(function (error) {
+                                console.error('Erreur notification admin nouveau compte :', error);
+                            });
+                        }
                     });
                 })
                 .catch(function (error) {
@@ -2386,9 +2438,10 @@
             // progressent, pas seulement ceux qui ont déjà gagné. En classement
             // mensuel, on garde les victoires du mois (c'est un podium de
             // performance, pas de participation).
-            const valeurPrincipale = classementMode === 'global'
-                ? '⭐ ' + (typeof j.score !== 'undefined' ? j.score : calculerScoreJoueur(j)) + ' pts'
-                : '🏆 ' + (j.victoires || 0);
+            // Le classement global affiche le nombre total de tournois gagnés,
+            // le classement mensuel affiche les victoires du mois en cours.
+            const nbVictoiresAffichees = classementMode === 'global' ? (victoiresGlobales || 0) : (j.victoires || 0);
+            const valeurPrincipale = '🏆 ' + nbVictoiresAffichees + ' victoire' + (nbVictoiresAffichees > 1 ? 's' : '');
             return '<div class="podium-place podium-place-' + rang + '">' +
                 '<div class="podium-medaille">' + medaille + '</div>' +
                 '<div class="podium-avatar">' + echapperHTML(j.avatar || '🙂') + '</div>' +
@@ -2436,9 +2489,8 @@
             classementList.innerHTML = joueursAffiches.map(function (j, index) {
                 const rang = index + 4;
                 const victoiresGlobales = typeof j.victoiresGlobales !== 'undefined' ? j.victoiresGlobales : j.victoires;
-                const valeurPrincipale = classementMode === 'global'
-                    ? '⭐ ' + (typeof j.score !== 'undefined' ? j.score : calculerScoreJoueur(j)) + ' pts'
-                    : '🏆 ' + (j.victoires || 0);
+                const nbVictoiresAffichees = classementMode === 'global' ? (victoiresGlobales || 0) : (j.victoires || 0);
+                const valeurPrincipale = '🏆 ' + nbVictoiresAffichees + ' victoire' + (nbVictoiresAffichees > 1 ? 's' : '');
                 return '<div class="classement-ligne">' +
                     '<span class="classement-rang">#' + rang + '</span>' +
                     '<span class="classement-avatar">' + echapperHTML(j.avatar || '🙂') + '</span>' +
@@ -2566,6 +2618,7 @@
             accueilTournoisList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
             accueilBracketList.innerHTML = '<p style="text-align:center;">Chargement...</p>';
             afficherClassement();
+            afficherStatsAdmin();
 
             tournoisRef.once('value')
                 .then(function (snapshot) {
@@ -3968,15 +4021,19 @@
             });
         }
 
-        // Envoie une notification dans la boîte de réception d'un utilisateur donné
-        function envoyerNotification(uid, texte, type) {
+        // Envoie une notification dans la boîte de réception d'un utilisateur donné.
+        // "lien" est optionnel : s'il est fourni, un bouton cliquable est affiché
+        // sous le texte de la notification (ex : lien d'invitation Discord).
+        function envoyerNotification(uid, texte, type, lien) {
             if (!uid || !texte) return Promise.resolve();
-            return notificationsRef.child(uid).push({
+            const donnees = {
                 texte: texte,
                 type: type || 'info',
                 timestamp: Date.now(),
                 lu: false
-            }).catch(function (error) {
+            };
+            if (lien) donnees.lien = lien;
+            return notificationsRef.child(uid).push(donnees).catch(function (error) {
                 console.error('Erreur lors de l\'envoi de la notification :', error);
             });
         }
@@ -3990,9 +4047,18 @@
         // rappel n'est envoyé qu'une seule fois par palier, grâce au drapeau
         // stocké directement sur l'inscription (tournois/{id}/inscrits/{uid}/rappels).
         // ============================================================
+        // Lien d'invitation Discord (même serveur que le bouton "Rejoindre" de la page Liens)
+        const DISCORD_INVITE_URL = 'https://discord.gg/JeR828Qcv';
+
         const RAPPEL_PALIERS = [
             { cle: 'r24h', minutesAvant: 24 * 60, texte: 'commence demain' },
-            { cle: 'r1h', minutesAvant: 60, texte: 'commence dans moins d\'1h' }
+            { cle: 'r1h', minutesAvant: 60, texte: 'commence dans moins d\'1h' },
+            {
+                cle: 'rDiscord',
+                minutesAvant: 10,
+                texte: 'commence dans quelques minutes : rejoins le Discord dès maintenant pour le lancement',
+                lien: DISCORD_INVITE_URL
+            }
         ];
         let intervalleRappelsAutomatiques = null;
 
@@ -4019,7 +4085,7 @@
                         if (dejaEnvoye || minutesRestantes > palier.minutesAvant) return;
 
                         const quandTexte = t.date ? ' (' + formatDate(t.date) + (t.heure ? ' à ' + t.heure : '') + ')' : '';
-                        envoyerNotification(monUid, '⏰ Rappel : le tournoi "' + (t.nom || 'ce tournoi') + '" ' + palier.texte + quandTexte + '.', 'rappel');
+                        envoyerNotification(monUid, '⏰ Rappel : le tournoi "' + (t.nom || 'ce tournoi') + '" ' + palier.texte + quandTexte + '.', 'rappel', palier.lien);
                         tournoisRef.child(id).child('inscrits').child(monUid).child('rappels').child(palier.cle).set(true)
                             .catch(function (error) { console.error('Erreur enregistrement rappel :', error); });
                     });
@@ -4031,8 +4097,12 @@
 
         function demarrerRappelsAutomatiques() {
             arreterRappelsAutomatiques();
-            // Vérification toutes les 5 minutes tant que l'app reste ouverte
-            intervalleRappelsAutomatiques = setInterval(verifierRappelsAutomatiques, 5 * 60 * 1000);
+            // Vérification toutes les 2 minutes (plus fréquent qu'avant) pour que le
+            // rappel Discord juste avant le début reste précis malgré l'absence de backend
+            intervalleRappelsAutomatiques = setInterval(function () {
+                verifierRappelsAutomatiques();
+                nettoyerAncienMessages();
+            }, 2 * 60 * 1000);
         }
 
         function arreterRappelsAutomatiques() {
@@ -4040,6 +4110,86 @@
                 clearInterval(intervalleRappelsAutomatiques);
                 intervalleRappelsAutomatiques = null;
             }
+        }
+
+        // ============================================================
+        // Purge automatique des vieux messages (groupe + privés)
+        // ------------------------------------------------------------
+        // Les messages (de groupe par tournoi, et privés entre deux joueurs) sont
+        // supprimés au bout de DUREE_CONSERVATION_MESSAGES_MS pour éviter de faire
+        // gonfler la base indéfiniment. Comme il n'y a pas de backend, la purge est
+        // déclenchée côté client (connexion + toutes les 2 min tant que l'app est
+        // ouverte) mais limitée à un passage complet toutes les 6h maximum grâce à
+        // une transaction sur "config/dernierNettoyageMessages" : même si plusieurs
+        // joueurs ont l'app ouverte en même temps, un seul déclenche la purge.
+        // ============================================================
+        const DUREE_CONSERVATION_MESSAGES_MS = 5 * 24 * 60 * 60 * 1000; // 5 jours
+        const INTERVALLE_NETTOYAGE_MESSAGES_MS = 6 * 60 * 60 * 1000;    // au plus 1 passage complet toutes les 6h
+
+        function nettoyerAncienMessages() {
+            const maintenant = Date.now();
+            configRef.child('dernierNettoyageMessages').transaction(function (valeurActuelle) {
+                if (valeurActuelle && (maintenant - valeurActuelle) < INTERVALLE_NETTOYAGE_MESSAGES_MS) {
+                    return; // annule la transaction : un autre client a déjà nettoyé récemment
+                }
+                return maintenant;
+            }).then(function (result) {
+                if (!result.committed) return;
+                const seuil = maintenant - DUREE_CONSERVATION_MESSAGES_MS;
+                purgerSalonsMessages(messagesRef, seuil);
+                purgerMessagesPrives(seuil);
+            }).catch(function (error) {
+                console.error('Erreur lors de la purge des anciens messages :', error);
+            });
+        }
+
+        // Purge un ensemble de salons à un niveau : ref/{salonId}/{messageId} = { texte, timestamp, ... }
+        // (utilisé pour les messages de groupe, un salon par tournoi)
+        function purgerSalonsMessages(ref, seuil) {
+            ref.once('value').then(function (snapshot) {
+                const data = snapshot.val() || {};
+                Object.keys(data).forEach(function (salonId) {
+                    const messages = data[salonId] || {};
+                    const suppressions = {};
+                    Object.keys(messages).forEach(function (msgId) {
+                        const msg = messages[msgId];
+                        if (msg && msg.timestamp && msg.timestamp < seuil) suppressions[msgId] = null;
+                    });
+                    if (Object.keys(suppressions).length > 0) {
+                        ref.child(salonId).update(suppressions).catch(function (error) {
+                            console.error('Erreur suppression anciens messages de groupe :', error);
+                        });
+                    }
+                });
+            }).catch(function (error) {
+                console.error('Erreur lecture des messages de groupe pour purge :', error);
+            });
+        }
+
+        // Purge les messages privés : structure imbriquée sur deux niveaux
+        // messagesPrives/{uidA}/{uidB}/{messageId}
+        function purgerMessagesPrives(seuil) {
+            messagesPrivesRef.once('value').then(function (snapshot) {
+                const data = snapshot.val() || {};
+                Object.keys(data).forEach(function (uidA) {
+                    const sousConversations = data[uidA] || {};
+                    Object.keys(sousConversations).forEach(function (uidB) {
+                        const messages = sousConversations[uidB] || {};
+                        const suppressions = {};
+                        Object.keys(messages).forEach(function (msgId) {
+                            const msg = messages[msgId];
+                            if (msg && msg.timestamp && msg.timestamp < seuil) suppressions[msgId] = null;
+                        });
+                        if (Object.keys(suppressions).length > 0) {
+                            messagesPrivesRef.child(uidA).child(uidB).update(suppressions).catch(function (error) {
+                                console.error('Erreur suppression anciens messages privés :', error);
+                            });
+                        }
+                    });
+                });
+            }).catch(function (error) {
+                console.error('Erreur lecture des messages privés pour purge :', error);
+            });
         }
 
 
@@ -4052,6 +4202,8 @@
             'equipe-aleatoire': '🎲',
             match: '⚔️',
             bye: '⏭️',
+            rappel: '⏰',
+            'inscription-compte': '🆕',
             info: '🔔'
         };
 
@@ -4065,8 +4217,12 @@
 
         function genererNotificationHTML(id, notif) {
             const icone = ICONES_NOTIFICATION[notif.type] || ICONES_NOTIFICATION.info;
+            const lienHTML = notif.lien
+                ? '<a class="notif-lien-btn" href="' + echapperHTML(notif.lien) + '" target="_blank" rel="noopener noreferrer">💬 Rejoindre le Discord</a>'
+                : '';
             return '<div class="notification-card' + (notif.lu ? '' : ' non-lue') + '">' +
                 '<p class="notif-texte">' + icone + ' ' + echapperHTML(notif.texte || '') + '</p>' +
+                lienHTML +
                 '<span class="notif-date">' + formatDateHeureNotification(notif.timestamp) + '</span>' +
                 '<button type="button" class="notif-supprimer" data-id="' + echapperHTML(id) + '">🗑️ Supprimer</button>' +
                 '</div>';
@@ -4151,6 +4307,20 @@
         function estAdmin() {
             return window.currentUser && window.currentUser.email &&
                 window.currentUser.email.trim().toLowerCase() === ADMIN_EMAIL;
+        }
+
+        // Affiche à l'admin le nombre total de comptes créés sur l'application
+        function afficherStatsAdmin() {
+            if (!estAdmin()) return;
+            const panel = document.getElementById('admin-stats-panel');
+            const compteurEl = document.getElementById('admin-nb-comptes');
+            comptesRef.once('value').then(function (snapshot) {
+                const nb = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+                compteurEl.textContent = nb;
+                panel.classList.remove('hidden');
+            }).catch(function (error) {
+                console.error('Erreur récupération du nombre de comptes :', error);
+            });
         }
 
         function formatDate(dateStr) {
