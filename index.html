@@ -246,13 +246,35 @@
         }
 
         .admin-stats-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
             text-align: center;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 999px;
-            padding: 0.5rem 1rem;
-            margin-bottom: 1.2rem;
+            background: linear-gradient(135deg, var(--jaune-eclat), #ff9f3c);
+            color: #2b1400;
+            border-radius: 16px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.4rem;
+            font-size: 1.05rem;
+            font-weight: 800;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .admin-stats-panel .admin-stats-icone {
+            font-size: 1.4rem;
+        }
+
+        .admin-stats-panel #admin-nb-comptes {
+            font-size: 1.3rem;
+        }
+
+        .admin-stats-panel.erreur {
+            background: #ffe1e1;
+            color: #8a1f1f;
+            font-weight: 700;
             font-size: 0.9rem;
-            font-weight: 600;
         }
 
         .filtre-tournois-panel {
@@ -1795,7 +1817,10 @@
         <div class="tournois-container">
             <h1 id="welcome" style="text-align:center; margin-bottom:1.5rem;">Ma page</h1>
 
-            <div id="admin-stats-panel" class="admin-stats-panel hidden">👥 <span id="admin-nb-comptes">0</span> comptes créés sur l'application</div>
+            <div id="admin-stats-panel" class="admin-stats-panel hidden">
+                <span class="admin-stats-icone">👥</span>
+                <span id="admin-stats-texte"><span id="admin-nb-comptes">0</span> comptes créés sur l'application</span>
+            </div>
 
             <div class="recherche-joueur-panel">
                 <h2 style="margin-bottom:0.8rem;">Rechercher un joueur</h2>
@@ -4413,13 +4438,21 @@
         function afficherStatsAdmin() {
             if (!estAdmin()) return;
             const panel = document.getElementById('admin-stats-panel');
-            const compteurEl = document.getElementById('admin-nb-comptes');
+            const texteEl = document.getElementById('admin-stats-texte');
+
+            // On affiche tout de suite un état "chargement" pour être sûr
+            // que le bloc est bien visible pendant qu'on va chercher le nombre.
+            panel.classList.remove('hidden', 'erreur');
+            texteEl.innerHTML = '<span id="admin-nb-comptes">…</span> comptes créés sur l\'application';
+
             comptesRef.once('value').then(function (snapshot) {
                 const nb = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
-                compteurEl.textContent = nb;
-                panel.classList.remove('hidden');
+                panel.classList.remove('erreur');
+                texteEl.innerHTML = '<span id="admin-nb-comptes">' + nb + '</span> comptes créés sur l\'application';
             }).catch(function (error) {
                 console.error('Erreur récupération du nombre de comptes :', error);
+                panel.classList.add('erreur');
+                texteEl.textContent = "Impossible de lire le nombre de comptes (vérifie les règles Firebase pour l'admin).";
             });
         }
 
