@@ -524,6 +524,54 @@
             line-height: 1.5;
         }
 
+        .participants-btn {
+            margin-top: 0.6rem;
+            width: 100%;
+            padding: 0.55rem;
+            border: none;
+            border-radius: 999px;
+            background: #2575fc;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .participants-btn:hover {
+            opacity: 0.9;
+        }
+
+        .participants-liste {
+            list-style: none;
+            margin: 0.5rem 0 0;
+            padding: 0;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .participants-liste li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.2rem;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+
+        .participants-liste li:last-child {
+            border-bottom: none;
+        }
+
+        .participants-liste .participant-nom {
+            font-weight: 600;
+        }
+
+        .participants-liste .participant-detail {
+            color: #777;
+            font-size: 0.78rem;
+        }
+
         .partager-btn {
             margin-top: 0.6rem;
             width: 100%;
@@ -1810,6 +1858,15 @@
             </div>
             <p id="equipe-erreur" style="color:#c0392b; text-align:center; margin-top:0.6rem; font-size:0.85rem;"></p>
             <button type="button" id="equipe-annuler-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:#eee; color:#333; font-weight:600; cursor:pointer; margin-top:0.6rem;">Annuler</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="participants-overlay">
+        <div class="modal" id="participants-modal">
+            <h2 id="participants-titre">Inscrits</h2>
+            <p id="participants-compte" style="text-align:center; color:#555; font-size:0.85rem; margin-bottom:0.5rem;"></p>
+            <ul class="participants-liste" id="participants-liste"></ul>
+            <button type="button" id="participants-fermer-btn" style="width:100%; padding:0.7rem; border:none; border-radius:8px; background:#eee; color:#333; font-weight:600; cursor:pointer; margin-top:1rem;">Fermer</button>
         </div>
     </div>
 
@@ -4397,6 +4454,56 @@
         // Garde l'état du tournoi pour lequel la fenêtre de choix d'équipe est ouverte
         let equipeModalContexte = null;
 
+        const participantsOverlay = document.getElementById('participants-overlay');
+        const participantsTitre = document.getElementById('participants-titre');
+        const participantsCompte = document.getElementById('participants-compte');
+        const participantsListeEl = document.getElementById('participants-liste');
+        const participantsFermerBtn = document.getElementById('participants-fermer-btn');
+
+        // Récupère et affiche, pour l'admin, la liste des personnes inscrites à un tournoi
+        function afficherParticipantsTournoi(tournoiId, nomTournoi) {
+            participantsTitre.textContent = 'Inscrits — ' + (nomTournoi || 'Tournoi');
+            participantsCompte.textContent = 'Chargement...';
+            participantsListeEl.innerHTML = '';
+            participantsOverlay.classList.remove('hidden');
+
+            tournoisRef.child(tournoiId).child('inscrits').once('value')
+                .then(function (snapshot) {
+                    const inscrits = snapshot.val() || {};
+                    const uids = Object.keys(inscrits);
+
+                    participantsCompte.textContent = uids.length + ' inscrit' + (uids.length > 1 ? 's' : '');
+
+                    if (uids.length === 0) {
+                        participantsListeEl.innerHTML = '<li style="justify-content:center; color:#777;">Personne n\'est encore inscrit à ce tournoi.</li>';
+                        return;
+                    }
+
+                    participantsListeEl.innerHTML = uids.map(function (uid) {
+                        const insc = inscrits[uid] || {};
+                        const nom = insc.name || 'Joueur';
+                        const details = [];
+                        if (insc.tag) details.push('#' + insc.tag);
+                        if (insc.identifiant) details.push(insc.identifiant);
+                        if (insc.equipe) details.push('Équipe : ' + insc.equipe);
+
+                        return '<li>' +
+                            '<span class="participant-nom">' + echapperHTML(nom) + '</span>' +
+                            (details.length ? '<span class="participant-detail">' + echapperHTML(details.join(' · ')) + '</span>' : '') +
+                            '</li>';
+                    }).join('');
+                })
+                .catch(function (error) {
+                    console.error('Erreur Firebase :', error);
+                    participantsCompte.textContent = '';
+                    participantsListeEl.innerHTML = '<li style="justify-content:center; color:#c0392b;">Erreur lors du chargement des inscrits.</li>';
+                });
+        }
+
+        participantsFermerBtn.addEventListener('click', function () {
+            participantsOverlay.classList.add('hidden');
+        });
+
         const tournoisPage = document.getElementById('tournois-page');
         const tournoisBtn = document.getElementById('tournois-btn');
         const tournoisList = document.getElementById('tournois-list');
@@ -4573,6 +4680,9 @@
                 '<button type="button" class="' + classeBouton + '" data-id="' + echapperHTML(t.id) + '"' +
                     (complet ? ' disabled' : '') + '>' + texteBouton + '</button>' +
                 '<button type="button" class="partager-btn" data-id="' + echapperHTML(t.id) + '" data-nom="' + echapperHTML(t.nom) + '">🔗 Partager à des amis</button>' +
+                (afficherSupprimer && estAdmin()
+                    ? '<button type="button" class="participants-btn" data-id="' + echapperHTML(t.id) + '" data-nom="' + echapperHTML(t.nom) + '">📋 Voir les inscrits (' + nbInscrits + ')</button>'
+                    : '') +
                 (afficherSupprimer && estAdmin()
                     ? '<button type="button" class="tirage-btn" data-id="' + echapperHTML(t.id) + '">🎲 Tirer au sort le 1er tour</button>'
                     : '') +
@@ -6238,6 +6348,11 @@
             const partagerBtn = e.target.closest('.partager-btn');
             if (partagerBtn) {
                 partagerTournoi(partagerBtn.dataset.id, partagerBtn.dataset.nom);
+                return;
+            }
+            const participantsBtn = e.target.closest('.participants-btn');
+            if (participantsBtn) {
+                afficherParticipantsTournoi(participantsBtn.dataset.id, participantsBtn.dataset.nom);
                 return;
             }
             const tirageBtn = e.target.closest('.tirage-btn');
